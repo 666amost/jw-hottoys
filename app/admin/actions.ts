@@ -199,11 +199,15 @@ export async function adjustStock(formData: FormData) {
       variantId: z.string().uuid(),
       stock: z.coerce.number().int().min(0),
       note: z.string().trim().max(200),
+      regularPrice: z.union([z.literal(""), z.coerce.number().int().min(0)]),
+      salePrice: z.union([z.literal(""), z.coerce.number().int().min(0)]),
     })
     .safeParse({
       variantId: formData.get("variant_id"),
       stock: formData.get("stock"),
       note: formData.get("note") ?? "",
+      regularPrice: formData.get("regular_price") ?? "",
+      salePrice: formData.get("sale_price") ?? "",
     });
   if (!input.success) return;
   const supabase = await adminClient();
@@ -212,6 +216,14 @@ export async function adjustStock(formData: FormData) {
     p_new_stock: input.data.stock,
     p_note: input.data.note,
   });
+
+  // Update prices when provided
+  const updatePayload: Record<string, any> = {};
+  if (input.data.regularPrice !== "") updatePayload.regular_price = input.data.regularPrice;
+  if (input.data.salePrice !== "") updatePayload.sale_price = input.data.salePrice === null ? null : input.data.salePrice;
+  if (Object.keys(updatePayload).length > 0) {
+    await supabase.from("product_variants").update(updatePayload).eq("id", input.data.variantId);
+  }
   revalidatePath("/admin/inventory");
 }
 
