@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1100" role="img" aria-labelledby="title">
+  <title id="title">Foto produk JW Hottoys segera hadir</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7fafb"/>
+      <stop offset="1" stop-color="#eaf2f4"/>
+    </linearGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#0d5772" stroke-opacity=".055"/>
+    </pattern>
+    <pattern id="layers" width="20" height="14" patternUnits="userSpaceOnUse">
+      <path d="M0 13.2h20" stroke="#082f3d" stroke-opacity=".14" stroke-width="1.6"/>
+    </pattern>
+    <clipPath id="figure">
+      <circle cx="450" cy="338" r="132"/>
+      <path d="M345 480c0-35 28-63 63-63h84c35 0 63 28 63 63v196H345Z"/>
+      <path d="m357 477-104 184 67 41 91-151Z"/>
+      <path d="m543 477 104 184-67 41-91-151Z"/>
+      <path d="m371 650-52 222 78 16 53-180 53 180 78-16-52-222Z"/>
+    </clipPath>
+  </defs>
+
+  <rect width="900" height="1100" rx="48" fill="url(#bg)"/>
+  <rect width="900" height="1100" rx="48" fill="url(#grid)"/>
+  <circle cx="450" cy="500" r="312" fill="#fff" stroke="#0d5772" stroke-opacity=".12" stroke-width="3"/>
+
+  <g fill="#f7b718" stroke="#082f3d" stroke-linejoin="round">
+    <circle cx="450" cy="338" r="132" stroke-width="9"/>
+    <path d="M345 480c0-35 28-63 63-63h84c35 0 63 28 63 63v196H345Z" fill="#0d5772" stroke-width="9"/>
+    <path d="m357 477-104 184 67 41 91-151Z" fill="#e84b18" stroke-width="9"/>
+    <path d="m543 477 104 184-67 41-91-151Z" fill="#e84b18" stroke-width="9"/>
+    <path d="m371 650-52 222 78 16 53-180 53 180 78-16-52-222Z" fill="#082f3d" stroke-width="9"/>
+  </g>
+
+  <g fill="#082f3d">
+    <circle cx="405" cy="333" r="14"/>
+    <circle cx="495" cy="333" r="14"/>
+    <path d="M404 386c26 18 66 18 92 0" fill="none" stroke="#082f3d" stroke-linecap="round" stroke-width="10"/>
+  </g>
+
+  <rect x="220" y="185" width="460" height="720" fill="url(#layers)" clip-path="url(#figure)"/>
+  <ellipse cx="450" cy="906" rx="238" ry="46" fill="#fff" stroke="#0d5772" stroke-width="6"/>
+
+  <g transform="translate(351 105)">
+    <path d="M0 0h198l-26 54H26Z" fill="#082f3d"/>
+    <path d="M76 54h46v46H76Z" fill="#e84b18"/>
+    <path d="m76 100 23 24 23-24Z" fill="#f7b718" stroke="#082f3d" stroke-width="5"/>
+  </g>
+
+  <text x="450" y="1017" text-anchor="middle" font-family="Arial,sans-serif" font-size="29" font-weight="700" letter-spacing="7" fill="#0d5772">FOTO SEGERA HADIR</text>
+</svg>

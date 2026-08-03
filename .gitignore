@@ -1,0 +1,36 @@
+# dependencies
+/node_modules
+/.npm-cache
+
+# next
+/.next
+/out
+
+# production
+/build
+
+# local environment
+.env
+.env.*
+/.certificates
+
+# local OAuth credentials
+client_secret_*.apps.googleusercontent.com.json
+
+# private project notes and documentation
+*.md
+
+# local SQL and database scripts
+*.sql
+
+# BCE operational codebase is maintained separately
+/potonganwebappBCEExpress/
+
+# testing
+/coverage
+
+# misc
+*.log
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
