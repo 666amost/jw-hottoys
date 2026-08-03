@@ -34,6 +34,8 @@ describe("payment and stock database contract", () => {
   it("sends the server-calculated final order total to SumoPod", () => {
     expect(sumopodAdapter).toContain("amount: input.amount");
     expect(sumopodAdapter).toContain('payment_method_type_code: "QRIS"');
+    expect(sumopodAdapter).toContain("const QRIS_EXPIRY_HOURS = 0.5");
+    expect(sumopodAdapter).toContain("expires_in_hours: QRIS_EXPIRY_HOURS");
     expect(sumopodAdapter).toContain("value.payment_link_url");
     expect(sumopodAdapter).not.toContain("shipping_reference_amount");
   });

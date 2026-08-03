@@ -1,16 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/internal/process-shipments",
-      "schedule": "* * * * *"
-    },
-    {
-      "path": "/api/internal/reconcile-tracking",
-      "schedule": "*/2 * * * *"
-    },
-    {
-      "path": "/api/internal/expire-orders",
-      "schedule": "*/5 * * * *"
-    }
-  ]
-}
+{}

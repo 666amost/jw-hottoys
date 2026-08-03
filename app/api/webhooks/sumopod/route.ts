@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import { apiError, serverError } from "@/lib/api";
 import { verifySumoPodWebhook } from "@/lib/integrations/sumopod";
@@ -37,8 +38,10 @@ export async function POST(request: Request) {
     const event = eventSchema.parse(verified);
     if (event.event_type === "payment.test") return Response.json({ received: true });
 
-    const eventId = request.headers.get("svix-id");
-    if (!eventId) return apiError("Header svix-id wajib ada.", 422, "MISSING_EVENT_ID");
+    const eventId =
+      request.headers.get("svix-id") ??
+      request.headers.get("x-webhook-id") ??
+      `sha256:${createHash("sha256").update(rawBody).digest("hex")}`;
 
     const { data, error } = await createAdminClient().rpc("process_payment_event", {
       p_event_id: eventId,

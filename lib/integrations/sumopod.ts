@@ -6,6 +6,8 @@ import { z } from "zod";
 import { env } from "@/lib/env";
 import { getSumoPodReturnUrls } from "@/lib/integrations/sumopod-return-urls";
 
+const QRIS_EXPIRY_HOURS = 0.5;
+
 const paymentResponseSchema = z
   .object({
     id: z.string().optional(),
@@ -52,7 +54,7 @@ export async function createSumoPodPayment(input: {
       order_id: input.orderNumber,
       amount: input.amount,
       currency: "IDR",
-      expires_in_hours: 1,
+      expires_in_hours: QRIS_EXPIRY_HOURS,
       ...getSumoPodReturnUrls(env.siteUrl, input.orderNumber),
       payment_method_type_code: "QRIS",
     }),
