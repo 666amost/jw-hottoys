@@ -6,7 +6,9 @@ import { z } from "zod";
 import { env } from "@/lib/env";
 import { getSumoPodReturnUrls } from "@/lib/integrations/sumopod-return-urls";
 
-const QRIS_EXPIRY_HOURS = 0.5;
+// SumoPod validates this field as a whole number of hours. The store keeps its
+// own, stricter 30-minute reservation deadline in create_checkout.
+const QRIS_EXPIRY_HOURS = 1;
 
 const paymentResponseSchema = z
   .object({
