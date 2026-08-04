@@ -18,7 +18,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   return (
     <div className="container-shell py-8 sm:py-12">
       <div className="brand-grid overflow-hidden rounded-3xl bg-[#082f3d] px-6 py-8 text-white sm:px-10 sm:py-10">
-        <p className="text-[10px] font-extrabold uppercase tracking-[.2em] text-[#f7b718]">Katalog JW Hottoys</p>
+        <p className="text-[10px] font-extrabold uppercase tracking-[.2em] text-[#f7b718]">Katalog JWLAB STUDIO</p>
         <h1 className="mt-2 text-3xl font-black tracking-[-.04em] sm:text-5xl">Cari figure favorit Anda.</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Action figure, chibi, dan desk toys hasil 3D print.</p>
       </div>

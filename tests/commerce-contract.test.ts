@@ -10,7 +10,7 @@ const storeMigration = readFileSync(
 const bceMigration = readFileSync(
   resolve(
     root,
-    "potonganwebappBCEExpress/supabase/migrations/202607290001_jw_hot_toys_partner.sql",
+    "potonganwebappBCEExpress/supabase/migrations/202607290001_jwlab_studio_partner.sql",
   ),
   "utf8",
 );
@@ -41,18 +41,18 @@ describe("payment and stock database contract", () => {
   });
 });
 
-describe("BCE JW-HOTTOYS flat billing contract", () => {
+describe("BCE JWLAB-STUDIO flat billing contract", () => {
   it("uses the customer charged amount as BCE total with no second discount", () => {
-    expect(bceMigration).toContain("'JW-HOTTOYS'");
+    expect(bceMigration).toContain("'JWLAB-STUDIO'");
     expect(bceMigration).toContain("'agent_flat'");
     expect(bceMigration).toContain("p_shipping_charged_amount, 0, 0, 0, p_shipping_charged_amount");
     expect(bceMigration).toContain("buktimembayar, potongan");
   });
 
   it("uses a database sequence and idempotency table for collision-safe AWB", () => {
-    expect(bceMigration).toContain("create sequence if not exists public.jw_hot_toys_awb_seq");
+    expect(bceMigration).toContain("create sequence if not exists public.jwlab_studio_awb_seq");
     expect(bceMigration).toContain("idempotency_key text primary key");
-    expect(bceMigration).toContain("nextval('public.jw_hot_toys_awb_seq')");
+    expect(bceMigration).toContain("nextval('public.jwlab_studio_awb_seq')");
     expect(bceMigration).toContain("manifest_awb_no_unique");
   });
 });

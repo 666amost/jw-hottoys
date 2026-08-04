@@ -29,17 +29,17 @@ export function SiteHeader() {
 
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
         <div className="container-shell flex h-19 items-center gap-3 sm:gap-5">
-          <Link href="/" className="flex shrink-0 items-center" aria-label="JW Hottoys — beranda">
+          <Link href="/" className="flex shrink-0 items-center" aria-label="JWLAB STUDIO — beranda">
             <Image
-              src="/logo-JWhottoys.png"
+              src="/logo-jwlab-studio.png"
               width={62}
               height={62}
-              alt="JW Hottoys"
+              alt="JWLAB STUDIO"
               priority
               className="size-13 object-contain sm:size-15"
             />
             <span className="ml-2 hidden text-sm font-black tracking-[.13em] text-[#082f3d] lg:block">
-              JW HOTTOYS
+              JWLAB STUDIO
             </span>
           </Link>
 

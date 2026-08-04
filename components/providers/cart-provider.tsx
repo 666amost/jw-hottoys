@@ -11,7 +11,7 @@ import {
 } from "react";
 import type { CartLine, Product } from "@/lib/types";
 
-const STORAGE_KEY = "jw-hottoys-cart-v1";
+const STORAGE_KEY = "jwlab-studio-cart-v1";
 
 type CartContextValue = {
   lines: CartLine[];

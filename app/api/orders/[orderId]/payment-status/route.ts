@@ -12,7 +12,7 @@ export async function GET(
     const { orderId } = await params;
     const identifier = z
       .string()
-      .refine((value) => z.string().uuid().safeParse(value).success || /^JWH-[0-9]{8}-[0-9]{5,}$/.test(value))
+      .refine((value) => z.string().uuid().safeParse(value).success || /^JWL-[0-9]{8}-[0-9]{5,}$/.test(value))
       .safeParse(orderId);
     if (!identifier.success) return apiError("Nomor order tidak valid.", 422, "VALIDATION_ERROR");
     const supabase = await createClient();

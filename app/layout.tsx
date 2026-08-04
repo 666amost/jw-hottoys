@@ -8,13 +8,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: {
-    default: "JW Hottoys — Action Figure 3D Print",
-    template: "%s · JW Hottoys",
+    default: "JWLAB STUDIO — Action Figure 3D Print",
+    template: "%s · JWLAB STUDIO",
   },
   description:
     "Toko action figure, chibi, dan designer toys hasil 3D print. Checkout QRIS dan pengiriman melalui BCE Express.",
   openGraph: {
-    title: "JW Hottoys",
+    title: "JWLAB STUDIO",
     description: "Action figure dan desk toys hasil 3D print.",
     type: "website",
     locale: "id_ID",

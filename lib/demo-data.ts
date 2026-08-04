@@ -46,7 +46,7 @@ const makeProduct = (
   variant: {
     id: `${id}-default`,
     productId: id,
-    sku: `JWH-${id.toUpperCase()}`,
+    sku: `JWL-${id.toUpperCase()}`,
     name: variantName,
     regularPrice: price,
     salePrice,

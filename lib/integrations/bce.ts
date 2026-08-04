@@ -68,7 +68,7 @@ export async function createBceShipment(
     headers: { "Idempotency-Key": idempotencyKey },
     body: JSON.stringify({
       external_order_id: payload.externalOrderId,
-      sender: { warehouse_code: "JW-HOTTOYS-JKT" },
+      sender: { warehouse_code: "JWLAB-STUDIO-JKT" },
       recipient: {
         name: payload.recipient.name,
         phone: payload.recipient.phone,

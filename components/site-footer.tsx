@@ -9,13 +9,13 @@ export function SiteFooter() {
         <div>
           <div className="flex items-center gap-3">
             <Image
-              src="/logo-JWhottoys.png"
+              src="/logo-jwlab-studio.png"
               width={72}
               height={72}
-              alt="JW Hottoys"
+              alt="JWLAB STUDIO"
               className="size-17 object-contain"
             />
-            <p className="font-black tracking-[.15em] text-white">JW HOTTOYS</p>
+            <p className="font-black tracking-[.15em] text-white">JWLAB STUDIO</p>
           </div>
           <p className="mt-4 max-w-sm text-sm leading-6 text-slate-400">
             Action figure 3D print siap koleksi. Setiap pesanan dicek dan dikemas aman.
@@ -54,7 +54,7 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-white/10 py-5 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} JW Hottoys
+        © {new Date().getFullYear()} JWLAB STUDIO
       </div>
     </footer>
   );
