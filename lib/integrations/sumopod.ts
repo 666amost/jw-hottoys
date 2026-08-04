@@ -94,13 +94,20 @@ function safeEqual(expected: string, received: string) {
 }
 
 export function verifySumoPodWebhook(rawBody: string, headers: Headers) {
-  if (env.sumopodWebhookSecret) {
-    const event = new Webhook(env.sumopodWebhookSecret).verify(rawBody, {
-      "svix-id": headers.get("svix-id") ?? "",
-      "svix-timestamp": headers.get("svix-timestamp") ?? "",
-      "svix-signature": headers.get("svix-signature") ?? "",
-    });
-    return event;
+  const svixId = headers.get("svix-id");
+  const svixTimestamp = headers.get("svix-timestamp");
+  const svixSignature = headers.get("svix-signature");
+
+  if (env.sumopodWebhookSecret && svixId && svixTimestamp && svixSignature) {
+    try {
+      return new Webhook(env.sumopodWebhookSecret).verify(rawBody, {
+        "svix-id": svixId,
+        "svix-timestamp": svixTimestamp,
+        "svix-signature": svixSignature,
+      });
+    } catch {
+      // Sandbox deliveries can still authenticate with x-webhook-token.
+    }
   }
 
   const receivedToken = headers.get("x-webhook-token") ?? "";

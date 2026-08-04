@@ -41,8 +41,12 @@ export function LocationPicker() {
     initialize();
     return () => {
       cancelled = true;
-      mapRef.current?.remove();
+      const map = mapRef.current;
+      map?.stop();
+      map?.off();
+      map?.remove();
       mapRef.current = null;
+      markerRef.current = null;
     };
   }, []);
 
@@ -51,7 +55,7 @@ export function LocationPicker() {
       const next: [number, number] = [coords.latitude, coords.longitude];
       setPoint(next);
       markerRef.current?.setLatLng(next);
-      mapRef.current?.setView(next, 16);
+      mapRef.current?.setView(next, 16, { animate: false });
     });
   }
 
@@ -69,4 +73,3 @@ export function LocationPicker() {
     </div>
   );
 }
-
