@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { apiError, serverError } from "@/lib/api";
 import { verifySumoPodWebhook } from "@/lib/integrations/sumopod";
+import { normalizeSumoPodCompletedAt } from "@/lib/integrations/sumopod-event";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
       p_order_number: event.data.order_id,
       p_amount: event.data.amount,
       p_currency: event.data.currency,
-      p_completed_at: event.data.completed_at ?? new Date().toISOString(),
+      p_completed_at: normalizeSumoPodCompletedAt(event.data.completed_at),
       p_payload: verified,
     });
     if (error) throw error;
