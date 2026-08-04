@@ -26,7 +26,7 @@ export default async function OrderDetailPage({
     <section className="container-shell py-10 sm:py-14">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div><p className="eyebrow">Detail pesanan</p><h1 className="mt-2 text-3xl font-black">{order.order_number}</h1></div>
-        <span className="rounded-full bg-[#eaf2f4] px-4 py-2 text-xs font-bold uppercase text-[#0d5772]">{order.payment_status} · {order.status}</span>
+        <span className="rounded-full bg-[#e8efff] px-4 py-2 text-xs font-bold uppercase text-[#1746a2]">{order.payment_status} · {order.status}</span>
       </div>
       <div className="mt-7 grid items-start gap-6 lg:grid-cols-[1fr_380px]">
         <div className="grid gap-6">
@@ -42,11 +42,11 @@ export default async function OrderDetailPage({
             </div>
           </section>
           <section className="surface p-6">
-            <div className="flex items-center gap-3"><Truck size={24} className="text-[#0d5772]" /><div><h2 className="font-black">Tracking BCE Express</h2><p className="text-xs text-slate-500">{shipment?.awb_number ?? "Menunggu pembuatan AWB"}</p></div></div>
+            <div className="flex items-center gap-3"><Truck size={24} className="text-[#1746a2]" /><div><h2 className="font-black">Tracking BCE Express</h2><p className="text-xs text-slate-500">{shipment?.awb_number ?? "Menunggu pembuatan AWB"}</p></div></div>
             <div className="mt-6 grid gap-5">
               {events.map((event, index) => (
                 <div key={`${event.occurred_at}-${index}`} className="flex gap-4">
-                  {index === 0 ? <CheckCircle size={22} weight="fill" className="shrink-0 text-[#0d5772]" /> : <Circle size={22} className="shrink-0 text-slate-300" />}
+                  {index === 0 ? <CheckCircle size={22} weight="fill" className="shrink-0 text-[#1746a2]" /> : <Circle size={22} className="shrink-0 text-slate-300" />}
                   <div><p className="text-sm font-bold capitalize">{event.status.replaceAll("_", " ")}</p><p className="mt-1 text-xs text-slate-500">{event.location}{event.note ? ` · ${event.note}` : ""}</p><time className="mt-1 block text-[10px] text-slate-400">{new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(event.occurred_at))}</time></div>
                 </div>
               ))}
@@ -65,7 +65,7 @@ export default async function OrderDetailPage({
           </dl>
           <div className="my-5 border-t border-dashed" />
           <div className="flex justify-between"><dt className="font-bold">Total</dt><dd className="text-xl font-black">{formatCurrency(order.total_amount)}</dd></div>
-          <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-xs leading-5 text-slate-500"><Package size={19} className="mb-2 text-[#0d5772]" />Dikirim ke {order.recipient_name}, {order.shipping_destination_code}. Detail alamat lengkap hanya terlihat oleh pemilik order dan admin.</div>
+          <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-xs leading-5 text-slate-500"><Package size={19} className="mb-2 text-[#1746a2]" />Dikirim ke {order.recipient_name}, {order.shipping_destination_code}. Detail alamat lengkap hanya terlihat oleh pemilik order dan admin.</div>
         </aside>
       </div>
     </section>

@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowRight, CheckCircle, Clock, WarningCircle } from "@phosphor-icons/react";
+import { ArrowRight, Clock, WarningCircle } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/providers/cart-provider";
 import { Button } from "@/components/ui/button";
+import { QrisSuccessLottie } from "@/components/payment/qris-success-lottie";
 import {
   getNextPaymentStatusPollDelay,
   getPaymentMonitoringDeadline,
@@ -44,7 +45,38 @@ export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
     let finished = false;
     let deadline = startedAt + QRIS_MONITORING_WINDOW_MS;
     let timeout: ReturnType<typeof setTimeout> | undefined;
-    let channel: ReturnType<typeof supabase.channel> | undefined;
+    const channel = supabase
+      .channel(`payment-status:${orderNumber}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `order_number=eq.${orderNumber}`,
+        },
+        (payload: { new: Record<string, unknown> }) => {
+          if (!active || finished) return;
+          const updated = payload.new as Partial<StatusResponse>;
+          if (!updated.payment_status) return;
+
+          setStatus((current) =>
+            current
+              ? { ...current, payment_status: updated.payment_status as PaymentState }
+              : updated.id && updated.order_number
+                ? (updated as StatusResponse)
+                : current,
+          );
+          setFailed(false);
+          finish(updated.payment_status as PaymentState);
+        },
+      )
+      .subscribe((realtimeStatus: string) => {
+        if (!active) return;
+        if (realtimeStatus === "CHANNEL_ERROR" || realtimeStatus === "TIMED_OUT") {
+          setFailed(true);
+        }
+      });
 
     function stopMonitoring() {
       if (timeout) clearTimeout(timeout);
@@ -93,39 +125,6 @@ export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
       }
     }
 
-    channel = supabase
-      .channel(`payment-status:${orderNumber}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "orders",
-          filter: `order_number=eq.${orderNumber}`,
-        },
-        (payload: { new: Record<string, unknown> }) => {
-          if (!active || finished) return;
-          const updated = payload.new as Partial<StatusResponse>;
-          if (!updated.payment_status) return;
-
-          setStatus((current) =>
-            current
-              ? { ...current, payment_status: updated.payment_status as PaymentState }
-              : updated.id && updated.order_number
-                ? (updated as StatusResponse)
-                : current,
-          );
-          setFailed(false);
-          finish(updated.payment_status as PaymentState);
-        },
-      )
-      .subscribe((realtimeStatus: string) => {
-        if (!active) return;
-        if (realtimeStatus === "CHANNEL_ERROR" || realtimeStatus === "TIMED_OUT") {
-          setFailed(true);
-        }
-      });
-
     void checkStatus();
 
     return () => {
@@ -142,7 +141,7 @@ export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
 
   return (
     <div className="surface mx-auto max-w-xl p-7 text-center sm:p-10">
-      {paid ? <CheckCircle size={54} weight="fill" className="mx-auto text-emerald-500" /> : review || terminalFailure ? <WarningCircle size={54} weight="fill" className="mx-auto text-amber-500" /> : <Clock size={54} weight="fill" className="mx-auto text-[#0d5772]" />}
+      {paid ? <QrisSuccessLottie /> : review || terminalFailure ? <WarningCircle size={54} weight="fill" className="mx-auto text-amber-500" /> : <Clock size={54} weight="fill" className="mx-auto text-[#1746a2]" />}
       <p className="eyebrow mt-6">{status?.order_number ?? orderNumber}</p>
       <h1 className="mt-3 text-3xl font-black tracking-tight">
         {paid ? "Order diterima" : review ? "Pembayaran sedang ditinjau" : terminalFailure ? "Pembayaran tidak selesai" : monitoringEnded ? "Waktu QRIS selesai" : "Menunggu pembayaran QRIS"}

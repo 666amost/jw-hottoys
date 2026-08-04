@@ -62,6 +62,13 @@ export type ShippingPrice = {
   discountAmount: number;
 };
 
+export type SiteAnnouncement = {
+  id: string;
+  label: string;
+  message: string;
+  href: string | null;
+};
+
 export type Address = {
   id: string;
   label: string;

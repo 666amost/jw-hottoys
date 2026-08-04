@@ -2,10 +2,10 @@
   <title id="title">JWLAB STUDIO</title>
   <defs>
     <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-      <stop stop-color="#2563eb"/>
-      <stop offset="1" stop-color="#7c3aed"/>
+      <stop stop-color="#ff3347"/>
+      <stop offset="1" stop-color="#c6102e"/>
     </linearGradient>
   </defs>
-  <rect width="96" height="96" rx="26" fill="#090d17"/>
+  <rect width="96" height="96" rx="22" fill="#111217"/>
   <path d="M19 24h13v35c0 9 3 12 10 12 3 0 6-1 9-3V24h13v31c0 10 3 16 10 16 2 0 4 0 6-1v12c-3 2-7 3-12 3-8 0-14-3-18-9-5 6-12 9-21 9-17 0-23-10-23-25V24Z" fill="url(#g)"/>
 </svg>

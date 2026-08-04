@@ -1,7 +1,7 @@
 import {
   CheckCircle,
-  Cube,
   Package,
+  Ruler,
   ShieldCheck,
   Truck,
 } from "@phosphor-icons/react/dist/ssr";
@@ -62,14 +62,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
       />
       <nav className="mb-6 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
-        <Link href="/" className="hover:text-[#e84b18]">Beranda</Link><span>/</span>
+        <Link href="/" className="hover:text-[#e21b2d]">Beranda</Link><span>/</span>
         <Link href={`/categories/${product.category.slug}`}>{product.category.name}</Link><span>/</span>
-        <span className="text-[#082f3d]">{product.name}</span>
+        <span className="text-[#111217]">{product.name}</span>
       </nav>
 
       <div className="grid items-start gap-7 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
-        <section className="surface overflow-hidden border-[#0d5772]/15 bg-white">
-          <div className="relative aspect-[4/5] bg-white">
+        <section className="surface overflow-hidden border-black/10 bg-white">
+          <div className="relative aspect-[4/5] bg-[#f0f0ec]">
             <Image
               src={product.images[0] || "/product-placeholder.svg"}
               alt={product.name}
@@ -84,7 +84,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <section className="lg:sticky lg:top-25">
           <div className="flex flex-wrap items-center gap-2">
             <p className="eyebrow">{product.category.name}</p>
-            <span className="rounded-lg bg-emerald-50 px-2.5 py-1 text-[10px] font-extrabold text-emerald-700">
+            <span className="bg-emerald-50 px-2.5 py-1 text-[10px] font-extrabold text-emerald-700">
               READY STOCK
             </span>
           </div>
@@ -92,8 +92,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.name}
           </h1>
           <p className="mt-4 text-sm leading-6 text-slate-500">{product.shortDescription}</p>
-          <p className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#eaf2f4] px-3 py-2 text-xs font-extrabold text-[#0d5772]">
-            <Cube size={17} weight="duotone" /> {product.variant.name}
+          <p className="mt-4 inline-flex items-center gap-2 bg-[#e8efff] px-3 py-2 text-xs font-extrabold text-[#1746a2]">
+            <Ruler size={17} weight="duotone" /> {product.variant.name.replace(/^PLA\+\s*[•·]\s*/i, "")}
           </p>
           <div className="mt-7">
             {product.variant.salePrice && (
@@ -104,7 +104,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <div className="mt-1 flex flex-wrap items-center gap-3">
               <p className="text-3xl font-black tracking-tight">{formatCurrency(price)}</p>
               {product.variant.salePrice && (
-                <span className="rounded-lg bg-[#fff4d5] px-3 py-1 text-xs font-bold text-[#9a5b00]">
+                <span className="bg-[#ffe8eb] px-3 py-1 text-xs font-bold text-[#b31225]">
                   Hemat {formatCurrency(product.variant.regularPrice - product.variant.salePrice)}
                 </span>
               )}
@@ -112,13 +112,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
 
           <div className="mt-7 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="border border-black/10 bg-white p-4">
               <p className="text-xs font-semibold text-slate-500">Stok tersedia</p>
-              <p className="mt-1 font-black text-[#082f3d]">{stock} unit</p>
+              <p className="mt-1 font-black text-[#111217]">{stock} unit</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="border border-black/10 bg-white p-4">
               <p className="text-xs font-semibold text-slate-500">Berat kirim</p>
-              <p className="mt-1 font-black text-[#082f3d]">{product.variant.shippingWeightGrams} gram</p>
+              <p className="mt-1 font-black text-[#111217]">{product.variant.shippingWeightGrams} gram</p>
             </div>
           </div>
 
@@ -126,10 +126,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <AddToCart product={product} />
           </div>
 
-          <div className="mt-7 grid gap-3 rounded-3xl border border-slate-200 bg-white p-5 text-sm">
+          <div className="mt-7 grid gap-3 border border-black/10 bg-white p-5 text-sm">
             <p className="flex items-center gap-3"><ShieldCheck size={22} className="text-emerald-600" /> Produk dicek sebelum dikirim</p>
-            <p className="flex items-center gap-3"><Package size={22} className="text-[#0d5772]" /> Packing berlapis dan aman</p>
-            <p className="flex items-center gap-3"><Truck size={22} className="text-[#e84b18]" /> Ongkir Rp10.000 sampai 3 kg untuk Jakarta & Tangerang</p>
+            <p className="flex items-center gap-3"><Package size={22} className="text-[#1746a2]" /> Collector-safe packing</p>
+            <p className="flex items-center gap-3"><Truck size={22} className="text-[#e21b2d]" /> Ongkir Rp10.000 sampai 3 kg untuk Jakarta & Tangerang</p>
           </div>
         </section>
       </div>
@@ -144,9 +144,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <p className="font-black">Detail SKU</p>
           <dl className="mt-5 grid gap-4 text-sm">
             <div><dt className="text-xs text-slate-400">SKU</dt><dd className="mt-1 font-bold">{product.variant.sku}</dd></div>
-            <div><dt className="text-xs text-slate-400">Edisi</dt><dd className="mt-1 font-bold">{product.variant.name}</dd></div>
+            <div><dt className="text-xs text-slate-400">Edisi</dt><dd className="mt-1 font-bold">{product.variant.name.replace(/^PLA\+\s*[•·]\s*/i, "")}</dd></div>
             <div><dt className="text-xs text-slate-400">Kondisi</dt><dd className="mt-1 flex items-center gap-2 font-bold"><CheckCircle size={16} className="text-emerald-600" /> Baru</dd></div>
-            <div><dt className="text-xs text-slate-400">Skala / tipe</dt><dd className="mt-1 flex items-center gap-2 font-bold"><Cube size={16} /> {product.variant.name}</dd></div>
+            <div><dt className="text-xs text-slate-400">Ukuran / set</dt><dd className="mt-1 flex items-center gap-2 font-bold"><Ruler size={16} /> {product.variant.name.replace(/^PLA\+\s*[•·]\s*/i, "")}</dd></div>
           </dl>
         </aside>
       </section>

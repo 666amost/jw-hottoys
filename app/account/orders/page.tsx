@@ -19,13 +19,13 @@ export default async function OrdersPage() {
           const shipment = Array.isArray(order.shipments) ? order.shipments[0] : order.shipments;
           const itemCount = (order.order_items ?? []).reduce((sum, item) => sum + item.quantity, 0);
           return (
-            <Link href={`/account/orders/${order.id}`} key={order.id} className="surface flex flex-wrap items-center gap-5 p-6 transition hover:border-[#0d5772]/40">
-              <div className="grid size-12 place-items-center rounded-2xl bg-[#eaf2f4] text-[#0d5772]"><Package size={24} /></div>
+            <Link href={`/account/orders/${order.id}`} key={order.id} className="surface flex flex-wrap items-center gap-5 p-6 transition hover:border-[#1746a2]/40">
+              <div className="grid size-12 place-items-center rounded-2xl bg-[#e8efff] text-[#1746a2]"><Package size={24} /></div>
               <div className="min-w-48 flex-1">
                 <p className="font-black">{order.order_number}</p>
                 <p className="mt-1 text-xs text-slate-500">{new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(new Date(order.created_at))} · {itemCount} item</p>
               </div>
-              <div><p className="text-xs font-bold uppercase text-[#e84b18]">{shipment?.awb_number ? shipment.status : order.payment_status}</p><p className="mt-1 font-black">{formatCurrency(order.total_amount)}</p></div>
+              <div><p className="text-xs font-bold uppercase text-[#e21b2d]">{shipment?.awb_number ? shipment.status : order.payment_status}</p><p className="mt-1 font-black">{formatCurrency(order.total_amount)}</p></div>
               <ArrowRight size={20} className="text-slate-400" />
             </Link>
           );

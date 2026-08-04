@@ -27,8 +27,8 @@ export default async function AddressesPage() {
         {addresses?.map((address) => (
           <article key={address.id} className="surface p-6">
             <div className="flex items-center justify-between gap-3">
-              <p className="flex items-center gap-2 font-black"><MapPin className="text-[#0d5772]" /> {address.label}</p>
-              {address.is_default && <span className="rounded-full bg-[#eaf2f4] px-3 py-1 text-[10px] font-bold text-[#0d5772]">UTAMA</span>}
+              <p className="flex items-center gap-2 font-black"><MapPin className="text-[#1746a2]" /> {address.label}</p>
+              {address.is_default && <span className="rounded-full bg-[#e8efff] px-3 py-1 text-[10px] font-bold text-[#1746a2]">UTAMA</span>}
             </div>
             <p className="mt-5 font-bold">{address.recipient_name} · {address.phone}</p>
             <p className="mt-2 text-sm leading-6 text-slate-500">

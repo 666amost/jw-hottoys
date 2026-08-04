@@ -19,13 +19,13 @@ export function Button({
   return (
     <Component
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl font-extrabold transition outline-none focus-visible:ring-2 focus-visible:ring-[#f7b718] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-lg font-extrabold transition outline-none focus-visible:ring-2 focus-visible:ring-[#1746a2] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         {
-          "bg-[#f7b718] text-[#082f3d] shadow-[0_12px_32px_rgba(247,183,24,.24)] hover:bg-[#ffc83d]":
+          "bg-[#e21b2d] text-white shadow-[0_12px_32px_rgba(226,27,45,.22)] hover:bg-[#c91425]":
             variant === "primary",
-          "border border-slate-200 bg-white text-[#082f3d] hover:border-[#0d5772]/30 hover:bg-slate-50":
+          "border border-black/15 bg-white text-[#111217] hover:border-black/35 hover:bg-[#f5f5f2]":
             variant === "secondary",
-          "text-slate-700 hover:bg-[#eaf2f4]": variant === "ghost",
+          "text-slate-700 hover:bg-black/5": variant === "ghost",
           "bg-red-600 text-white hover:bg-red-500": variant === "danger",
           "h-9 px-4 text-sm": size === "sm",
           "h-11 px-5 text-sm": size === "md",

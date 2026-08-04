@@ -78,8 +78,8 @@ export function CheckoutForm({ addresses }: { addresses: CheckoutAddress[] }) {
           {addresses.length ? (
             <div className="mt-6 grid gap-3">
               {addresses.map((address) => (
-                <label key={address.id} className="flex cursor-pointer gap-4 rounded-2xl border border-slate-200 p-5 has-[:checked]:border-[#0d5772] has-[:checked]:bg-[#eaf2f4]">
-                  <input type="radio" name="address" value={address.id} checked={addressId === address.id} onChange={() => setAddressId(address.id)} className="mt-1 size-4 accent-[#0d5772]" />
+                <label key={address.id} className="flex cursor-pointer gap-4 rounded-2xl border border-slate-200 p-5 has-[:checked]:border-[#1746a2] has-[:checked]:bg-[#e8efff]">
+                  <input type="radio" name="address" value={address.id} checked={addressId === address.id} onChange={() => setAddressId(address.id)} className="mt-1 size-4 accent-[#1746a2]" />
                   <span>
                     <span className="font-black">{address.label}</span>
                     <span className="mt-1 block text-sm font-semibold">{address.recipient_name} · {address.phone}</span>
@@ -110,7 +110,7 @@ export function CheckoutForm({ addresses }: { addresses: CheckoutAddress[] }) {
           <div className="flex justify-between text-slate-600"><dt>Berat tagihan</dt><dd className="font-semibold text-slate-900">{shipping.billableWeightKg} kg</dd></div>
           <div className="flex items-start justify-between"><dt className="text-slate-600">Ongkir BCE</dt><dd className="text-right">
             {shipping.discountAmount > 0 && <span className="mr-2 text-xs text-slate-400 line-through">{formatCurrency(shipping.referenceAmount)}</span>}
-            <span className="font-bold text-[#e84b18]">{formatCurrency(shipping.chargedAmount)}</span>
+            <span className="font-bold text-[#e21b2d]">{formatCurrency(shipping.chargedAmount)}</span>
             {shipping.discountAmount > 0 && <span className="block text-[10px] font-bold text-emerald-600">Hemat {formatCurrency(shipping.discountAmount)}</span>}
           </dd></div>
         </dl>
@@ -123,7 +123,7 @@ export function CheckoutForm({ addresses }: { addresses: CheckoutAddress[] }) {
         </Button>
         <div className="mt-5 grid gap-3 text-xs text-slate-500">
           <p className="flex gap-2"><ShieldCheck size={17} className="shrink-0 text-emerald-600" /> Status lunas hanya dari webhook terverifikasi</p>
-          <p className="flex gap-2"><Truck size={17} className="shrink-0 text-[#0d5772]" /> AWB dibuat otomatis setelah pembayaran</p>
+          <p className="flex gap-2"><Truck size={17} className="shrink-0 text-[#1746a2]" /> AWB dibuat otomatis setelah pembayaran</p>
         </div>
       </aside>
     </div>

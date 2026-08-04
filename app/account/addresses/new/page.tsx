@@ -29,7 +29,7 @@ export default async function NewAddressPage({
           <label className="field-label">Kode pos<input className="field" name="postal_code" inputMode="numeric" maxLength={5} required /></label>
           <label className="field-label sm:col-span-2">Alamat lengkap<textarea className="field min-h-28 resize-y" name="address_line" placeholder="Jalan, nomor, RT/RW, gedung/unit" required /></label>
           <label className="field-label sm:col-span-2">Patokan<textarea className="field min-h-20 resize-y" name="landmark" placeholder="Contoh: pagar hitam di sebelah minimarket" /></label>
-          <label className="flex items-center gap-3 text-sm font-semibold"><input type="checkbox" name="is_default" defaultChecked className="size-4 accent-[#0d5772]" /> Jadikan alamat utama</label>
+          <label className="flex items-center gap-3 text-sm font-semibold"><input type="checkbox" name="is_default" defaultChecked className="size-4 accent-[#1746a2]" /> Jadikan alamat utama</label>
         </div>
         <div className="mt-8">
           <p className="mb-3 text-sm font-black">Titik lokasi</p>

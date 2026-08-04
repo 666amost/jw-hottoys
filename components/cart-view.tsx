@@ -23,7 +23,7 @@ export function CartView() {
   if (!lines.length) {
     return (
       <div className="surface mx-auto grid max-w-2xl place-items-center px-6 py-20 text-center">
-        <div className="grid size-18 place-items-center rounded-full bg-[#eaf2f4] text-[#0d5772]">
+        <div className="grid size-18 place-items-center rounded-full bg-[#e8efff] text-[#1746a2]">
           <ShoppingBagOpen size={34} />
         </div>
         <h1 className="mt-6 text-2xl font-black tracking-tight">Keranjang masih kosong</h1>
@@ -51,8 +51,8 @@ export function CartView() {
                 <Image src={line.image} alt={line.name} fill sizes="120px" className="object-cover" />
               </Link>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#e84b18]">{line.sku}</p>
-                <Link href={`/products/${line.slug}`} className="mt-1 block font-bold leading-snug text-slate-900 hover:text-[#0d5772]">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#e21b2d]">{line.sku}</p>
+                <Link href={`/products/${line.slug}`} className="mt-1 block font-bold leading-snug text-slate-900 hover:text-[#1746a2]">
                   {line.name}
                 </Link>
                 <p className="mt-2 font-black">{formatCurrency(line.unitPrice)}</p>
@@ -111,7 +111,7 @@ export function CartView() {
                   {formatCurrency(shipping.referenceAmount)}
                 </span>
               )}
-              <span className="font-bold text-[#e84b18]">{formatCurrency(shipping.chargedAmount)}</span>
+              <span className="font-bold text-[#e21b2d]">{formatCurrency(shipping.chargedAmount)}</span>
               {shipping.discountAmount > 0 && (
                 <span className="mt-1 block text-[10px] font-bold text-emerald-600">
                   Hemat {formatCurrency(shipping.discountAmount)}
@@ -130,7 +130,7 @@ export function CartView() {
         </Button>
         <div className="mt-5 grid gap-3 text-xs text-slate-500">
           <p className="flex items-center gap-2"><ShieldCheck size={17} className="text-emerald-600" /> Harga dan stok diverifikasi saat checkout</p>
-          <p className="flex items-center gap-2"><Truck size={17} className="text-[#0d5772]" /> Pengiriman Jakarta/Tangerang via BCE Express</p>
+          <p className="flex items-center gap-2"><Truck size={17} className="text-[#1746a2]" /> Pengiriman Jakarta/Tangerang via BCE Express</p>
         </div>
       </aside>
     </div>

@@ -218,7 +218,7 @@ export async function adjustStock(formData: FormData) {
   });
 
   // Update prices when provided
-  const updatePayload: Record<string, any> = {};
+  const updatePayload: Record<string, number | null> = {};
   if (input.data.regularPrice !== "") updatePayload.regular_price = input.data.regularPrice;
   if (input.data.salePrice !== "") updatePayload.sale_price = input.data.salePrice === null ? null : input.data.salePrice;
   if (Object.keys(updatePayload).length > 0) {
@@ -285,4 +285,108 @@ export async function updateOrderStatus(formData: FormData) {
   });
   revalidatePath("/admin/orders");
   revalidatePath(`/account/orders/${input.data.orderId}`);
+}
+
+const announcementFields = {
+  label: z.string().trim().min(2).max(40),
+  message: z.string().trim().min(2).max(120),
+  href: z.union([
+    z.literal(""),
+    z.string().trim().max(500).regex(/^(\/|https?:\/\/)/),
+  ]),
+  sortOrder: z.coerce.number().int().min(0).max(100),
+  startsAt: z.string().trim().max(40),
+  endsAt: z.string().trim().max(40),
+};
+
+function announcementPayload(formData: FormData) {
+  return {
+    label: formData.get("label"),
+    message: formData.get("message"),
+    href: formData.get("href") ?? "",
+    sortOrder: formData.get("sort_order") ?? 0,
+    startsAt: formData.get("starts_at") ?? "",
+    endsAt: formData.get("ends_at") ?? "",
+  };
+}
+
+function optionalIsoDate(value: string) {
+  if (!value) return null;
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(value)) return undefined;
+  const date = new Date(`${value.length === 16 ? `${value}:00` : value}+07:00`);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+function revalidateAnnouncementViews() {
+  revalidatePath("/", "layout");
+  revalidatePath("/admin/content");
+}
+
+export async function createAnnouncement(formData: FormData) {
+  const input = z.object(announcementFields).safeParse(announcementPayload(formData));
+  if (!input.success) redirect("/admin/content?error=invalid");
+
+  const startsAt = optionalIsoDate(input.data.startsAt);
+  const endsAt = optionalIsoDate(input.data.endsAt);
+  if (startsAt === undefined || endsAt === undefined || (startsAt && endsAt && endsAt <= startsAt)) {
+    redirect("/admin/content?error=schedule");
+  }
+
+  const supabase = await adminClient();
+  const { error } = await supabase.from("site_announcements").insert({
+    label: input.data.label,
+    message: input.data.message,
+    href: input.data.href || null,
+    sort_order: input.data.sortOrder,
+    starts_at: startsAt,
+    ends_at: endsAt,
+    active: formData.get("active") === "on",
+  });
+  if (error) redirect("/admin/content?error=save");
+
+  revalidateAnnouncementViews();
+  redirect("/admin/content?saved=created");
+}
+
+export async function updateAnnouncement(formData: FormData) {
+  const input = z
+    .object({ id: z.string().uuid(), ...announcementFields })
+    .safeParse({ id: formData.get("id"), ...announcementPayload(formData) });
+  if (!input.success) redirect("/admin/content?error=invalid");
+
+  const startsAt = optionalIsoDate(input.data.startsAt);
+  const endsAt = optionalIsoDate(input.data.endsAt);
+  if (startsAt === undefined || endsAt === undefined || (startsAt && endsAt && endsAt <= startsAt)) {
+    redirect("/admin/content?error=schedule");
+  }
+
+  const supabase = await adminClient();
+  const { error } = await supabase
+    .from("site_announcements")
+    .update({
+      label: input.data.label,
+      message: input.data.message,
+      href: input.data.href || null,
+      sort_order: input.data.sortOrder,
+      starts_at: startsAt,
+      ends_at: endsAt,
+      active: formData.get("active") === "on",
+    })
+    .eq("id", input.data.id);
+  if (error) redirect("/admin/content?error=save");
+
+  revalidateAnnouncementViews();
+  redirect("/admin/content?saved=updated");
+}
+
+export async function deleteAnnouncement(formData: FormData) {
+  const id = z.string().uuid().safeParse(formData.get("id"));
+  if (!id.success) redirect("/admin/content?error=invalid");
+
+  const supabase = await adminClient();
+  const { error } = await supabase.from("site_announcements").delete().eq("id", id.data);
+  if (error) redirect("/admin/content?error=delete");
+
+  revalidateAnnouncementViews();
+  redirect("/admin/content?saved=deleted");
 }

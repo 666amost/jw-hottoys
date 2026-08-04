@@ -29,6 +29,48 @@ type ProductRow = {
   }[];
 };
 
+const refreshedCatalogPresentation: Record<
+  string,
+  { variantName: string; description: string }
+> = {
+  "duo-fighter-arka-bima": {
+    variantName: "Set 2 pcs • 12 cm",
+    description:
+      "Set dua figure martial arts yang dirancang sebagai display piece ekspresif dan diperiksa satu per satu sebelum dikemas.",
+  },
+  "kuro-ninja-blue-chibi": {
+    variantName: "11 cm",
+    description:
+      "Figure ninja chibi dengan pose dinamis yang diperiksa satu per satu sebelum dikemas.",
+  },
+  "orbit-buddy-coral": {
+    variantName: "13 cm",
+    description:
+      "Designer toy dua warna dengan karakter ramah yang diperiksa satu per satu sebelum dikemas.",
+  },
+  "pocket-rover-r1": {
+    variantName: "7 cm",
+    description:
+      "Mini robot retro untuk display ringkas yang diperiksa satu per satu sebelum dikemas.",
+  },
+  "duo-fighter-arka-bima-dark-base": {
+    variantName: "Set 2 pcs • 12 cm",
+    description:
+      "Set dua figure martial arts dengan dark display base yang diperiksa satu per satu sebelum dikemas.",
+  },
+  "orbit-buddy-mini": {
+    variantName: "9 cm",
+    description:
+      "Versi mini Orbit Buddy untuk meja dan rak yang diperiksa satu per satu sebelum dikemas.",
+  },
+};
+
+const refreshedCategoryDescriptions: Record<string, string> = {
+  "figure-karakter": "Figure dengan pose kuat untuk koleksi, hadiah, dan statement display.",
+  "chibi-mini-figure": "Figure berukuran ringkas dengan karakter yang ekspresif.",
+  "designer-toys": "Desk toys dan karakter orisinal dengan bentuk yang unik.",
+};
+
 function describeCatalogError(error: unknown) {
   if (error instanceof Error) {
     return {
@@ -54,15 +96,19 @@ function describeCatalogError(error: unknown) {
 function mapProduct(row: ProductRow): Product | null {
   const variant = row.product_variants?.[0];
   if (!variant) return null;
+  const skuSeparator = variant.sku.indexOf("-");
+  const catalogSku = `JWL-${skuSeparator >= 0 ? variant.sku.slice(skuSeparator + 1) : variant.sku}`;
+  const refreshedPresentation = refreshedCatalogPresentation[row.slug];
 
   const category: Category = row.categories
     ? {
         id: row.categories.id,
         name: row.categories.name,
         slug: row.categories.slug,
-        description: row.categories.description,
+        description:
+          refreshedCategoryDescriptions[row.categories.slug] ?? row.categories.description,
       }
-    : { id: "uncategorized", name: "Produk 3D Print", slug: "produk-3d-print" };
+    : { id: "uncategorized", name: "Koleksi Figure", slug: "koleksi-figure" };
 
   const images = [...(row.product_images || [])]
     .sort((a, b) => a.sort_order - b.sort_order)
@@ -74,7 +120,7 @@ function mapProduct(row: ProductRow): Product | null {
     name: row.name,
     slug: row.slug,
     shortDescription: row.short_description || "",
-    description: row.description || "",
+    description: refreshedPresentation?.description ?? row.description ?? "",
     category,
     images: images.length ? images : ["/product-placeholder.svg"],
     featured: row.featured,
@@ -82,8 +128,8 @@ function mapProduct(row: ProductRow): Product | null {
     variant: {
       id: variant.id,
       productId: row.id,
-      sku: variant.sku,
-      name: variant.name,
+      sku: catalogSku,
+      name: refreshedPresentation?.variantName ?? variant.name,
       regularPrice: Number(variant.regular_price),
       salePrice: variant.sale_price == null ? null : Number(variant.sale_price),
       stockOnHand: variant.stock_on_hand,

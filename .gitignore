@@ -28,6 +28,7 @@ client_secret_*.apps.googleusercontent.com.json
 
 # testing
 /coverage
+/.tmp
 
 # misc
 *.log

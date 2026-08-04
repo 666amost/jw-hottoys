@@ -1,21 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { CartProvider } from "@/components/providers/cart-provider";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
+import { CartProvider } from "@/components/providers/cart-provider";
+import { RouteTransition } from "@/components/providers/route-transition";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { getActiveAnnouncements } from "@/lib/site-content";
 import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: {
-    default: "JWLAB STUDIO — Action Figure 3D Print",
+    default: "JWLAB STUDIO — Original Collectible Figures",
     template: "%s · JWLAB STUDIO",
   },
   description:
-    "Toko action figure, chibi, dan designer toys hasil 3D print. Checkout QRIS dan pengiriman melalui BCE Express.",
+    "Koleksi figure karakter, chibi, dan designer toys orisinal untuk display dan hadiah. Checkout QRIS dan pengiriman melalui BCE Express.",
   openGraph: {
     title: "JWLAB STUDIO",
-    description: "Action figure dan desk toys hasil 3D print.",
+    description: "Figure karakter dan designer toys orisinal yang layak jadi pusat perhatian.",
     type: "website",
     locale: "id_ID",
   },
@@ -24,16 +26,18 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#082f3d",
+  themeColor: "#111217",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const announcements = await getActiveAnnouncements();
+
   return (
     <html lang="id">
       <body>
         <CartProvider>
-          <SiteHeader />
-          <main>{children}</main>
+          <SiteHeader announcements={announcements} />
+          <RouteTransition>{children}</RouteTransition>
           <SiteFooter />
           <MobileBottomNav />
         </CartProvider>

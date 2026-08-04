@@ -1,4 +1,4 @@
-import { Gauge, Package, Percent, PlugsConnected, Stack } from "@phosphor-icons/react/dist/ssr";
+import { Gauge, Megaphone, Package, Percent, PlugsConnected, Stack } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -8,6 +8,7 @@ const links = [
   { href: "/admin/products", label: "Produk", icon: Package },
   { href: "/admin/inventory", label: "Inventory", icon: Stack },
   { href: "/admin/vouchers", label: "Voucher", icon: Percent },
+  { href: "/admin/content", label: "Billboard", icon: Megaphone },
   { href: "/admin/orders", label: "Order", icon: Package },
   { href: "/admin/integrations", label: "Integrasi BCE", icon: PlugsConnected },
 ];
@@ -34,4 +35,3 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     </section>
   );
 }
-
