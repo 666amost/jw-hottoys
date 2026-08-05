@@ -64,7 +64,7 @@ export default async function HomePage() {
                 New collectible universe
               </div>
               <h1 className="display-title mt-6 max-w-[650px]">
-                Koleksi yang punya <span className="block text-[#ff4052] sm:inline">karakter.</span>
+                Figure buat  <span className="block text-[#ff4052] sm:inline">Penghobi.</span>
               </h1>
               <p className="mt-6 max-w-xl text-sm leading-6 text-slate-300 sm:text-lg sm:leading-8">
                 Temukan figure orisinal dengan pose ikonik, detail menarik, dan kepribadian yang siap menghidupkan ruangmu.

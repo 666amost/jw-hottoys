@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Clock, WarningCircle } from "@phosphor-icons/react";
+import { ArrowRight, CircleNotch, Clock, WarningCircle } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/providers/cart-provider";
@@ -35,7 +35,7 @@ function isTerminal(status: PaymentState) {
 export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
   const { clearCart } = useCart();
   const [status, setStatus] = useState<StatusResponse | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [connectionIssue, setConnectionIssue] = useState(false);
   const [monitoringEnded, setMonitoringEnded] = useState(false);
 
   useEffect(() => {
@@ -43,6 +43,7 @@ export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
     const supabase = createClient();
     let active = true;
     let finished = false;
+    let consecutiveCheckFailures = 0;
     let deadline = startedAt + QRIS_MONITORING_WINDOW_MS;
     let timeout: ReturnType<typeof setTimeout> | undefined;
     const channel = supabase
@@ -67,14 +68,17 @@ export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
                 ? (updated as StatusResponse)
                 : current,
           );
-          setFailed(false);
+          consecutiveCheckFailures = 0;
+          setConnectionIssue(false);
           finish(updated.payment_status as PaymentState);
         },
       )
       .subscribe((realtimeStatus: string) => {
         if (!active) return;
         if (realtimeStatus === "CHANNEL_ERROR" || realtimeStatus === "TIMED_OUT") {
-          setFailed(true);
+          // Polling remains active, so a realtime interruption alone should not
+          // be presented to the customer as a payment problem.
+          scheduleFallbackCheck();
         }
       });
 
@@ -94,7 +98,7 @@ export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
     function scheduleFallbackCheck() {
       if (!active || finished) return;
       if (timeout) clearTimeout(timeout);
-      const delay = getNextPaymentStatusPollDelay(Date.now(), deadline);
+      const delay = getNextPaymentStatusPollDelay(Date.now(), deadline, startedAt);
       if (delay === null) {
         setMonitoringEnded(true);
         return;
@@ -114,13 +118,15 @@ export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
         if (!active || finished) return;
 
         deadline = getPaymentMonitoringDeadline(startedAt, getExpiresAt(data));
+        consecutiveCheckFailures = 0;
         setStatus(data);
-        setFailed(false);
+        setConnectionIssue(false);
         finish(data.payment_status);
         if (!isTerminal(data.payment_status)) scheduleFallbackCheck();
       } catch {
         if (!active || finished) return;
-        setFailed(true);
+        consecutiveCheckFailures += 1;
+        if (consecutiveCheckFailures >= 3) setConnectionIssue(true);
         scheduleFallbackCheck();
       }
     }
@@ -138,13 +144,22 @@ export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
   const paid = paymentStatus === "paid";
   const review = paymentStatus === "review";
   const terminalFailure = paymentStatus === "failed" || paymentStatus === "expired";
+  const confirming = !paid && !review && !terminalFailure && !monitoringEnded;
 
   return (
-    <div className="surface mx-auto max-w-xl p-7 text-center sm:p-10">
-      {paid ? <QrisSuccessLottie /> : review || terminalFailure ? <WarningCircle size={54} weight="fill" className="mx-auto text-amber-500" /> : <Clock size={54} weight="fill" className="mx-auto text-[#1746a2]" />}
+    <div className="surface mx-auto max-w-xl p-7 text-center sm:p-10" aria-live="polite">
+      {paid ? (
+        <QrisSuccessLottie />
+      ) : review || terminalFailure ? (
+        <WarningCircle size={54} weight="fill" className="mx-auto text-amber-500" />
+      ) : confirming ? (
+        <CircleNotch size={54} weight="bold" className="mx-auto animate-spin text-[#1746a2]" />
+      ) : (
+        <Clock size={54} weight="fill" className="mx-auto text-[#1746a2]" />
+      )}
       <p className="eyebrow mt-6">{status?.order_number ?? orderNumber}</p>
       <h1 className="mt-3 text-3xl font-black tracking-tight">
-        {paid ? "Order diterima" : review ? "Pembayaran sedang ditinjau" : terminalFailure ? "Pembayaran tidak selesai" : monitoringEnded ? "Waktu QRIS selesai" : "Menunggu pembayaran QRIS"}
+        {paid ? "Order diterima" : review ? "Pembayaran sedang ditinjau" : terminalFailure ? "Pembayaran tidak selesai" : monitoringEnded ? "Waktu QRIS selesai" : "Mengonfirmasi pembayaran"}
       </h1>
       <p className="mt-3 text-sm leading-6 text-slate-500">
         {paid
@@ -157,9 +172,11 @@ export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
               ? "Reservasi stok telah dilepas. Anda dapat melakukan checkout ulang."
               : monitoringEnded
                 ? "Pemantauan otomatis berhenti setelah 30 menit. Muat ulang detail pesanan jika Anda sudah membayar."
-                : "Status akan berubah otomatis setelah webhook SumoPod mengonfirmasi pembayaran. Pemantauan maksimal 30 menit."}
+                : status
+                  ? "Pembayaran sedang dicocokkan dengan konfirmasi QRIS. Halaman ini akan diperbarui otomatis."
+                  : "Tunggu sebentar, kami sedang mengambil status pembayaran terbaru."}
       </p>
-      {failed && !monitoringEnded && <p className="mt-4 text-xs font-semibold text-amber-700">Koneksi realtime sempat terputus; pengecekan cadangan berjalan sekali per menit.</p>}
+      {connectionIssue && !monitoringEnded && <p className="mt-4 text-xs font-semibold text-amber-700">Status belum dapat diperbarui. Kami akan mencoba lagi secara otomatis.</p>}
       <Button asChild className="mt-7">
         <Link href={status?.id ? `/account/orders/${status.id}` : "/account/orders"}>
           Lihat detail pesanan <ArrowRight size={18} />

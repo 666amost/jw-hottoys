@@ -1,10 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { MobileBottomNav } from "@/components/mobile-bottom-nav";
-import { CartProvider } from "@/components/providers/cart-provider";
-import { RouteTransition } from "@/components/providers/route-transition";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
-import { getActiveAnnouncements } from "@/lib/site-content";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -29,19 +23,10 @@ export const viewport: Viewport = {
   themeColor: "#111217",
 };
 
-export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const announcements = await getActiveAnnouncements();
-
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="id">
-      <body>
-        <CartProvider>
-          <SiteHeader announcements={announcements} />
-          <RouteTransition>{children}</RouteTransition>
-          <SiteFooter />
-          <MobileBottomNav />
-        </CartProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

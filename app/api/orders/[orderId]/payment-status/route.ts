@@ -1,6 +1,6 @@
 import { apiError, serverError } from "@/lib/api";
+import { orderLookupIdentifierSchema } from "@/lib/order-identifiers";
 import { createClient } from "@/lib/supabase/server";
-import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
@@ -10,10 +10,7 @@ export async function GET(
 ) {
   try {
     const { orderId } = await params;
-    const identifier = z
-      .string()
-      .refine((value) => z.string().uuid().safeParse(value).success || /^JWL-[0-9]{8}-[0-9]{5,}$/.test(value))
-      .safeParse(orderId);
+    const identifier = orderLookupIdentifierSchema.safeParse(orderId);
     if (!identifier.success) return apiError("Nomor order tidak valid.", 422, "VALIDATION_ERROR");
     const supabase = await createClient();
     const {
