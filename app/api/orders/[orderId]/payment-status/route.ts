@@ -1,5 +1,8 @@
 import { apiError, serverError } from "@/lib/api";
-import { orderLookupIdentifierSchema } from "@/lib/order-identifiers";
+import {
+  getOrderLookupColumn,
+  orderLookupIdentifierSchema,
+} from "@/lib/order-identifiers";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +26,7 @@ export async function GET(
       .select(
         "id,order_number,status,payment_status,total_amount,payments(payment_url,expires_at),shipments(awb_number,status,tracking_url)",
       )
-      .or(`id.eq.${identifier.data},order_number.eq.${identifier.data}`)
+      .eq(getOrderLookupColumn(identifier.data), identifier.data)
       .eq("user_id", user.id)
       .maybeSingle();
     if (error) throw error;

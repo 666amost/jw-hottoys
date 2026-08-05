@@ -1,8 +1,10 @@
 import { z } from "zod";
 
-const orderNumberPattern = /^JW(?:H|L)-[0-9]{8}-[0-9]{5,}$/;
+export const orderIdSchema = z.string().uuid();
+export const orderNumberSchema = z.string().regex(/^JW(?:H|L)-[0-9]{8}-[0-9]{5,}$/);
 
-export const orderLookupIdentifierSchema = z.string().refine(
-  (value) => z.string().uuid().safeParse(value).success || orderNumberPattern.test(value),
-  "Nomor order tidak valid.",
-);
+export const orderLookupIdentifierSchema = z.union([orderIdSchema, orderNumberSchema]);
+
+export function getOrderLookupColumn(identifier: string): "id" | "order_number" {
+  return orderIdSchema.safeParse(identifier).success ? "id" : "order_number";
+}

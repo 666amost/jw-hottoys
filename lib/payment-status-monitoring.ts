@@ -1,3 +1,13 @@
+export type PaymentState = "pending" | "paid" | "failed" | "expired" | "review";
+
+export type PaymentStatusData = {
+  id: string;
+  order_number: string;
+  payment_status: PaymentState;
+  payments?: { expires_at: string | null } | Array<{ expires_at: string | null }>;
+  shipments?: Array<{ awb_number: string | null; status: string }>;
+};
+
 export const QRIS_MONITORING_WINDOW_MS = 30 * 60 * 1000;
 export const PAYMENT_STATUS_FAST_POLL_WINDOW_MS = 30 * 1000;
 export const PAYMENT_STATUS_FAST_POLL_INTERVAL_MS = 2 * 1000;

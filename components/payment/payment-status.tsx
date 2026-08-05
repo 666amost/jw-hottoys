@@ -9,21 +9,13 @@ import { QrisSuccessLottie } from "@/components/payment/qris-success-lottie";
 import {
   getNextPaymentStatusPollDelay,
   getPaymentMonitoringDeadline,
+  type PaymentState,
+  type PaymentStatusData,
   QRIS_MONITORING_WINDOW_MS,
 } from "@/lib/payment-status-monitoring";
 import { createClient } from "@/lib/supabase/client";
 
-type PaymentState = "pending" | "paid" | "failed" | "expired" | "review";
-
-type StatusResponse = {
-  id: string;
-  order_number: string;
-  payment_status: PaymentState;
-  payments?: { expires_at: string | null } | Array<{ expires_at: string | null }>;
-  shipments?: Array<{ awb_number: string | null; status: string }>;
-};
-
-function getExpiresAt(status: StatusResponse) {
+function getExpiresAt(status: PaymentStatusData) {
   const payments = status.payments;
   return Array.isArray(payments) ? payments[0]?.expires_at : payments?.expires_at;
 }
@@ -32,13 +24,24 @@ function isTerminal(status: PaymentState) {
   return status !== "pending";
 }
 
-export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
+export function PaymentStatus({
+  orderNumber,
+  initialStatus = null,
+}: {
+  orderNumber: string;
+  initialStatus?: PaymentStatusData | null;
+}) {
   const { clearCart } = useCart();
-  const [status, setStatus] = useState<StatusResponse | null>(null);
+  const [status, setStatus] = useState<PaymentStatusData | null>(initialStatus);
   const [connectionIssue, setConnectionIssue] = useState(false);
   const [monitoringEnded, setMonitoringEnded] = useState(false);
 
   useEffect(() => {
+    if (initialStatus && isTerminal(initialStatus.payment_status)) {
+      if (initialStatus.payment_status === "paid") clearCart();
+      return;
+    }
+
     const startedAt = Date.now();
     const supabase = createClient();
     let active = true;
@@ -58,14 +61,14 @@ export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
         },
         (payload: { new: Record<string, unknown> }) => {
           if (!active || finished) return;
-          const updated = payload.new as Partial<StatusResponse>;
+          const updated = payload.new as Partial<PaymentStatusData>;
           if (!updated.payment_status) return;
 
           setStatus((current) =>
             current
               ? { ...current, payment_status: updated.payment_status as PaymentState }
               : updated.id && updated.order_number
-                ? (updated as StatusResponse)
+                ? (updated as PaymentStatusData)
                 : current,
           );
           consecutiveCheckFailures = 0;
@@ -114,7 +117,7 @@ export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
           { cache: "no-store" },
         );
         if (!response.ok) throw new Error();
-        const data = (await response.json()) as StatusResponse;
+        const data = (await response.json()) as PaymentStatusData;
         if (!active || finished) return;
 
         deadline = getPaymentMonitoringDeadline(startedAt, getExpiresAt(data));
@@ -137,7 +140,7 @@ export function PaymentStatus({ orderNumber }: { orderNumber: string }) {
       active = false;
       stopMonitoring();
     };
-  }, [orderNumber, clearCart]);
+  }, [orderNumber, initialStatus, clearCart]);
 
   const paymentStatus = status?.payment_status ?? "pending";
   const awb = status?.shipments?.[0]?.awb_number;
