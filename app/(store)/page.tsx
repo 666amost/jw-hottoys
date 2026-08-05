@@ -48,6 +48,7 @@ export default async function HomePage() {
             alt="Lima karakter figure orisinal dalam display koleksi premium"
             fill
             priority
+            unoptimized
             sizes="(max-width: 1280px) 100vw, 1280px"
             className="object-cover object-[80%_center] sm:object-center"
           />
