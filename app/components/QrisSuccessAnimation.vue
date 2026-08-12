@@ -4,7 +4,7 @@ import animationData from "~~/lib/animations/qris-success.json";
 const element = ref<HTMLElement>();
 let animation: { destroy: () => void } | undefined;
 onMounted(async () => {
-  const lottie = (await import("lottie-web")).default;
+  const lottie = (await import("lottie-web/build/player/lottie_light")).default;
   if (!element.value) return;
   animation = lottie.loadAnimation({ container: element.value, renderer: "svg", loop: false, autoplay: true, animationData });
 });

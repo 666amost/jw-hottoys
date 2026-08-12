@@ -16,6 +16,7 @@
     "typecheck": "nuxt typecheck",
     "typecheck:workers": "tsc --noEmit -p tsconfig.workers.json",
     "lint": "eslint .",
+    "audit": "npm audit --audit-level=low",
     "test": "vitest run",
     "test:watch": "vitest",
     "env:setup": "node scripts/setup-env.mjs",
@@ -29,7 +30,7 @@
     "admin:create:local:fallback": "node scripts/create-admin.mjs local --fallback",
     "admin:create:remote": "node scripts/create-admin.mjs remote",
     "dry-run": "npm run build && wrangler deploy --dry-run --outdir .tmp/web-worker --config wrangler.web.jsonc && wrangler deploy --dry-run --outdir .tmp/operations-worker --config wrangler.operations.jsonc",
-    "verify": "npm run typecheck && npm run typecheck:workers && npm run lint && npm run test && npm run build && npm run dry-run"
+    "verify": "npm run audit && npm run typecheck && npm run typecheck:workers && npm run lint && npm run test && npm run build && npm run dry-run"
   },
   "dependencies": {
     "@phosphor-icons/vue": "^2.2.1",
@@ -52,13 +53,12 @@
     "@nuxt/test-utils": "^3.20.1",
     "@tailwindcss/vite": "^4.1.14",
     "@types/leaflet": "^1.9.20",
-    "drizzle-kit": "^0.31.4",
     "eslint": "10.8.0",
     "happy-dom": "^20.0.2",
     "tailwindcss": "^4.1.14",
     "typescript": "^5.9.3",
     "vitest": "3.2.7",
     "vue-tsc": "^3.1.1",
-    "wrangler": "4.115.0"
+    "wrangler": "4.122.0"
   }
 }

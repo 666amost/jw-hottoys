@@ -8,7 +8,7 @@ onMounted(() => { if (!loaded.value) void refresh(); });
 <template>
   <header class="sticky top-0 z-50 border-b border-black/10 bg-[#f7f7f5]/95 backdrop-blur">
     <div class="container-shell flex h-20 items-center justify-between gap-4">
-      <NuxtLink to="/" aria-label="JWLAB STUDIO - Beranda" class="flex items-center"><img src="/logo-jwlab-studio.webp" alt="JWLAB STUDIO" class="h-16 w-auto"></NuxtLink>
+      <NuxtLink to="/" aria-label="JWLAB STUDIO - Beranda" class="flex items-center"><img :src="'/logo-jwlab-studio.webp'" alt="JWLAB STUDIO" class="h-16 w-auto"></NuxtLink>
       <nav class="hidden items-center gap-6 text-sm font-bold md:flex">
         <NuxtLink to="/search">Koleksi figure robot</NuxtLink><NuxtLink to="/account">Akun</NuxtLink>
       </nav>
