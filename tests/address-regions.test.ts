@@ -22,8 +22,8 @@ describe("address region hierarchy", () => {
   it("only permits district and village lookups inside supported cities", () => {
     expect(isAllowedRegionParent("districts", "36.71")).toBe(true);
     expect(isAllowedRegionParent("districts", "36.03")).toBe(false);
-    expect(isAllowedRegionParent("villages", "36.71.10")).toBe(true);
-    expect(isAllowedRegionParent("villages", "36.03.10")).toBe(false);
+    expect(isAllowedRegionParent("villages", "3671010")).toBe(true);
+    expect(isAllowedRegionParent("villages", "3603010")).toBe(false);
     expect(isAllowedRegionParent("villages", "https://example.com")).toBe(false);
   });
 });

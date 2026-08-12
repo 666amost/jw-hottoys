@@ -32,6 +32,7 @@ type AddressRow = {
 
 definePageMeta({ middleware: "auth" });
 
+const route = useRoute();
 const { lines, count, subtotal } = useCart();
 const { data } = await useFetch<{ addresses: AddressRow[] }>("/api/account/addresses");
 const addressId = ref("");
@@ -104,8 +105,12 @@ useSeoMeta({
         <NuxtLink to="/search" class="mt-6 inline-flex min-h-11 items-center rounded-full bg-[#0b4697] px-5 text-sm font-black text-white">Pilih produk</NuxtLink>
       </div>
 
-      <div v-else class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_390px] xl:gap-8">
+      <div v-else class="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_390px] xl:gap-8">
         <div class="grid min-w-0 gap-5">
+          <div v-if="route.query.addressAdded" role="status" aria-live="polite" class="flex gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
+            <CheckCircle :size="23" weight="fill" class="shrink-0" />
+            <div><p class="text-sm font-black">Alamat berhasil ditambahkan</p><p class="mt-1 text-xs leading-5">Alamat baru sudah tersedia dan dipilih untuk pesanan ini.</p></div>
+          </div>
           <div v-if="error" role="alert" aria-live="assertive" class="flex gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800">
             <WarningCircle :size="23" weight="fill" class="shrink-0" />
             <div><p class="text-sm font-black">Checkout belum dapat dilanjutkan</p><p class="mt-1 text-xs leading-5">{{ error }}</p></div>
@@ -117,7 +122,7 @@ useSeoMeta({
                 <span class="grid size-10 place-items-center rounded-xl bg-blue-50 text-[#0b4697]"><MapPin :size="21" weight="fill" /></span>
                 <div><p class="text-[9px] font-black uppercase tracking-[.14em] text-[#0b4697]">Langkah 1</p><h2 id="shipping-address-title" class="mt-0.5 text-lg font-black">Alamat pengiriman</h2></div>
               </div>
-              <NuxtLink to="/account/addresses/new" class="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 text-xs font-black text-slate-700 transition hover:border-[#0b4697] hover:text-[#0b4697]"><Plus :size="15" weight="bold" /> Alamat baru</NuxtLink>
+              <NuxtLink to="/account/addresses/new?next=/checkout" class="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 text-xs font-black text-slate-700 transition hover:border-[#0b4697] hover:text-[#0b4697]"><Plus :size="15" weight="bold" /> Alamat baru</NuxtLink>
             </header>
 
             <div v-if="data?.addresses?.length" class="grid gap-3 p-5 sm:grid-cols-2 sm:p-6">
@@ -140,7 +145,7 @@ useSeoMeta({
               <span class="mx-auto grid size-14 place-items-center rounded-2xl bg-amber-50 text-amber-700"><MapPin :size="27" weight="duotone" /></span>
               <h3 class="mt-4 font-black">Alamat pengiriman diperlukan</h3>
               <p class="mt-2 text-sm text-slate-500">Tambahkan alamat Jakarta atau Tangerang untuk menghitung dan memproses pengiriman.</p>
-              <NuxtLink to="/account/addresses/new" class="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#0b4697] px-5 text-sm font-black text-white"><Plus :size="16" /> Tambah alamat</NuxtLink>
+              <NuxtLink to="/account/addresses/new?next=/checkout" class="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#0b4697] px-5 text-sm font-black text-white"><Plus :size="16" /> Tambah alamat</NuxtLink>
             </div>
           </section>
 
@@ -158,7 +163,7 @@ useSeoMeta({
             </div>
           </section>
 
-          <section class="surface overflow-hidden lg:hidden">
+          <section class="surface overflow-hidden md:hidden">
             <header class="border-b border-slate-100 px-5 py-4"><h2 class="font-black">Item pesanan</h2></header>
             <div class="divide-y divide-slate-100 px-5">
               <div v-for="line in lines" :key="line.variantId" class="flex items-center gap-3 py-4">
@@ -170,13 +175,13 @@ useSeoMeta({
           </section>
         </div>
 
-        <aside class="surface overflow-hidden lg:sticky lg:top-40">
+        <aside class="surface overflow-hidden md:sticky md:top-40">
           <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
             <p class="text-[9px] font-black uppercase tracking-[.14em] text-[#0b4697]">Langkah 3</p>
             <h2 class="mt-1 text-xl font-black">Konfirmasi pesanan</h2>
           </div>
 
-          <div class="hidden max-h-56 divide-y divide-slate-100 overflow-y-auto px-6 lg:block">
+          <div class="hidden max-h-56 divide-y divide-slate-100 overflow-y-auto px-6 md:block">
             <div v-for="line in lines" :key="line.variantId" class="flex items-center gap-3 py-4">
               <div class="relative size-14 shrink-0 rounded-xl border border-slate-100 bg-slate-50"><img :src="line.image" :alt="line.name" class="h-full w-full rounded-xl object-contain"><span class="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-slate-900 text-[9px] font-black text-white">{{ line.quantity }}</span></div>
               <div class="min-w-0 flex-1"><p class="truncate text-xs font-black">{{ line.name }}</p><p class="mt-1 text-[9px] text-slate-500">{{ line.sku }}</p></div>

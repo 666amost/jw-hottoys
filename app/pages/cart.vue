@@ -57,7 +57,7 @@ useSeoMeta({
         <NuxtLink to="/search" class="mt-7 inline-flex min-h-12 items-center gap-2 rounded-full bg-[#0b4697] px-6 text-sm font-black text-white transition hover:bg-[#073979]">Jelajahi koleksi <ArrowRight :size="17" /></NuxtLink>
       </div>
 
-      <div v-else class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_370px] xl:gap-8">
+      <div v-else class="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_330px] xl:grid-cols-[minmax(0,1fr)_370px] xl:gap-8">
         <div class="min-w-0">
           <div class="mb-4 flex items-center justify-between px-1">
             <h2 class="text-lg font-black">Produk pilihan</h2>
@@ -104,7 +104,7 @@ useSeoMeta({
           </div>
         </div>
 
-        <aside class="surface overflow-hidden lg:sticky lg:top-40">
+        <aside class="surface overflow-hidden md:sticky md:top-40">
           <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
             <h2 class="text-xl font-black">Ringkasan belanja</h2>
             <p class="mt-1 text-xs text-slate-500">Biaya akhir dikonfirmasi sebelum pembayaran.</p>
