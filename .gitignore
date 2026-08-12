@@ -2,16 +2,13 @@
 /node_modules
 /.npm-cache
 
-# next
-/.next
-/out
-
 # production
 /build
 
 # local environment
-.env
-.env.*
+.env*
+!.env.example
+.dev.vars*
 /.certificates
 
 # local OAuth credentials
@@ -19,9 +16,15 @@ client_secret_*.apps.googleusercontent.com.json
 
 # private project notes and documentation
 *.md
+!README.md
+!nextonuxtvue.md
 
 # local SQL and database scripts
 *.sql
+!database/
+!database/migrations/
+!database/migrations/*.sql
+!database/seed.sql
 
 # BCE operational codebase is maintained separately
 /potonganwebappBCEExpress/
@@ -29,6 +32,9 @@ client_secret_*.apps.googleusercontent.com.json
 # testing
 /coverage
 /.tmp
+/.wrangler
+/.nuxt
+/.output
 
 # misc
 *.log
@@ -37,3 +43,6 @@ Thumbs.db
 *.tsbuildinfo
 CODEBASE-WEB-JWLAB-STUDIO.code-workspace
 public/foto-lama.webp.bak
+.env.example
+README.md
+nextonuxtvue.md

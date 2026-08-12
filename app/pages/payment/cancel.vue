@@ -1,0 +1,2 @@
+<script setup lang="ts">useSeoMeta({title:"Pembayaran Dibatalkan"});</script>
+<template><section class="container-shell py-20 text-center"><div class="surface mx-auto max-w-lg p-8"><p class="eyebrow">Pembayaran dibatalkan</p><h1 class="mt-3 text-3xl font-black">Kamu belum dikenai biaya</h1><p class="mt-3 text-slate-500">Kembali ke keranjang untuk mencoba pembayaran lagi.</p><NuxtLink to="/cart" class="mt-7 inline-block rounded-full bg-[#0b4697] px-6 py-3 font-black text-white">Kembali ke keranjang</NuxtLink></div></section></template>

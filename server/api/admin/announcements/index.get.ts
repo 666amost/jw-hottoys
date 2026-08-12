@@ -1,0 +1,1 @@
+export default defineEventHandler(async (event) => { await requireAdmin(event); return { announcements: (await bindings(event).DB.prepare("SELECT * FROM site_announcements ORDER BY sort_order,created_at").all()).results }; });

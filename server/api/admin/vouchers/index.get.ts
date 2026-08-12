@@ -1,0 +1,1 @@
+export default defineEventHandler(async (event) => { await requireAdmin(event); return { vouchers: (await bindings(event).DB.prepare("SELECT * FROM vouchers ORDER BY created_at DESC").all()).results }; });

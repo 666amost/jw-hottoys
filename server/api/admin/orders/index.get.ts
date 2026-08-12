@@ -1,0 +1,1 @@
+export default defineEventHandler(async (event) => { await requireAdmin(event); return { orders: (await bindings(event).DB.prepare("SELECT o.*,s.awb_number,s.status shipment_status FROM orders o LEFT JOIN shipments s ON s.order_id=o.id ORDER BY o.created_at DESC").all()).results }; });

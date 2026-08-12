@@ -3,56 +3,42 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const root = resolve(import.meta.dirname, "..");
-const storeMigration = readFileSync(
-  resolve(root, "supabase/migrations/202607290001_initial_store.sql"),
-  "utf8",
-);
-const bceMigration = readFileSync(
-  resolve(
-    root,
-    "potonganwebappBCEExpress/supabase/migrations/202607290001_jwlab_studio_partner.sql",
-  ),
-  "utf8",
-);
-const sumopodAdapter = readFileSync(resolve(root, "lib/integrations/sumopod.ts"), "utf8");
+const migration = readFileSync(resolve(root, "database/migrations/0001_initial.sql"), "utf8");
+const payment = readFileSync(resolve(root, "server/utils/integrations.ts"), "utf8");
+const webhook = readFileSync(resolve(root, "server/api/webhooks/sumopod.post.ts"), "utf8");
+const operations = readFileSync(resolve(root, "workers/operations.ts"), "utf8");
+const checkout = readFileSync(resolve(root, "server/utils/commerce.ts"), "utf8");
 
-describe("payment and stock database contract", () => {
-  it("makes payment events and shipment creation idempotent", () => {
-    expect(storeMigration).toContain("unique(provider, event_id)");
-    expect(storeMigration).toContain("unique(order_id, variant_id)");
-    expect(storeMigration).toContain("on conflict(order_id) do nothing");
-    expect(storeMigration).toContain("'shipment_creation'");
+describe("D1 payment and stock contract", () => {
+  it("enforces idempotency and atomic reservation guards", () => {
+    expect(migration).toContain("UNIQUE(provider, event_id)");
+    expect(migration).toContain("UNIQUE(order_id, variant_id)");
+    expect(migration).toContain("UNIQUE(kind, dedupe_key)");
+    expect(migration).toContain("RAISE(ABORT, 'INSUFFICIENT_STOCK')");
+    expect(migration).toContain("RAISE(ABORT, 'VOUCHER_UNAVAILABLE')");
   });
 
-  it("reserves before payment and consumes stock exactly once after paid", () => {
-    expect(storeMigration).toContain("status = 'active' for update");
-    expect(storeMigration).toContain("stock_on_hand = stock_on_hand - v_reservation.quantity");
-    expect(storeMigration).toContain("reserved_stock = reserved_stock - v_reservation.quantity");
-    expect(storeMigration).toContain("update public.stock_reservations set status = 'consumed'");
+  it("consumes stock once and publishes shipment through an outbox", () => {
+    expect(migration).toContain("OLD.status = 'active' AND NEW.status = 'consumed'");
+    expect(migration).toContain("stock_on_hand = stock_on_hand - NEW.quantity");
+    expect(webhook).toContain("INSERT OR IGNORE INTO outbox_jobs");
+    expect(webhook).toContain("dispatchOutbox(env, outboxId)");
+    expect(operations).toContain("outboxId");
+    expect(operations).toContain("message.ack()");
   });
 
-  it("sends the server-calculated final order total to SumoPod", () => {
-    expect(sumopodAdapter).toContain("amount: input.amount");
-    expect(sumopodAdapter).toContain('payment_method_type_code: "QRIS"');
-    expect(sumopodAdapter).toContain("const QRIS_EXPIRY_HOURS = 1");
-    expect(sumopodAdapter).toContain("expires_in_hours: QRIS_EXPIRY_HOURS");
-    expect(sumopodAdapter).toContain("value.payment_link_url");
-    expect(sumopodAdapter).not.toContain("shipping_reference_amount");
-  });
-});
-
-describe("BCE JWLAB-STUDIO flat billing contract", () => {
-  it("uses the customer charged amount as BCE total with no second discount", () => {
-    expect(bceMigration).toContain("'JWLAB-STUDIO'");
-    expect(bceMigration).toContain("'agent_flat'");
-    expect(bceMigration).toContain("p_shipping_charged_amount, 0, 0, 0, p_shipping_charged_amount");
-    expect(bceMigration).toContain("buktimembayar, potongan");
+  it("sends the server-calculated total to SumoPod QRIS", () => {
+    expect(payment).toContain("amount: input.amount");
+    expect(payment).toContain('payment_method_type_code: "QRIS"');
+    expect(payment).toContain("expires_in_hours: QRIS_EXPIRY_HOURS");
+    expect(payment).toContain("getSumoPodReturnUrls(config.siteUrl, input.orderNumber)");
+    expect(checkout).toContain("30 * 60 * 1000");
+    expect(payment).not.toContain("shipping_reference_amount");
   });
 
-  it("uses a database sequence and idempotency table for collision-safe AWB", () => {
-    expect(bceMigration).toContain("create sequence if not exists public.jwlab_studio_awb_seq");
-    expect(bceMigration).toContain("idempotency_key text primary key");
-    expect(bceMigration).toContain("nextval('public.jwlab_studio_awb_seq')");
-    expect(bceMigration).toContain("manifest_awb_no_unique");
+  it("keeps BCE processing monotonic and idempotent", () => {
+    expect(migration).toContain("UNIQUE(shipment_id, external_event_id)");
+    expect(operations).toContain("const statusRank");
+    expect(operations).toContain('"Idempotency-Key"');
   });
 });

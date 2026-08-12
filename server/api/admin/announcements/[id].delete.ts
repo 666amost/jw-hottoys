@@ -1,0 +1,1 @@
+export default defineEventHandler(async (event) => { assertSafeMutation(event); await requireAdmin(event); await bindings(event).DB.prepare("DELETE FROM site_announcements WHERE id=?").bind(getRouterParam(event,"id")).run(); return { deleted:true }; });

@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jwlab-studio-web",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-08-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": ".output/public" },
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "jwlab-studio",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "database/migrations"
+    }
+  ],
+  "r2_buckets": [
+    { "binding": "PRODUCT_IMAGES", "bucket_name": "jwlab-studio-product-images" }
+  ],
+  "queues": {
+    "producers": [
+      { "binding": "SHIPMENT_QUEUE", "queue": "jwlab-studio-shipments" },
+      { "binding": "TRACKING_QUEUE", "queue": "jwlab-studio-tracking" }
+    ]
+  }
+}

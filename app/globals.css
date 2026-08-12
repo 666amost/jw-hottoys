@@ -1,11 +1,11 @@
 @import "tailwindcss";
 :root {
-  --background: #f5f5f2;
-  --foreground: #111217;
-  --brand-ink: #111217;
-  --brand-blue: #1746a2;
-  --brand-red: #e21b2d;
-  --brand-yellow: #ffc400;
+  --background: #f7f7f5;
+  --foreground: #101114;
+  --brand-ink: #101114;
+  --brand-blue: #0b4697;
+  --brand-blue-dark: #071a3d;
+  --brand-red: #ec0016;
 }
 
 * {
@@ -20,7 +20,7 @@ body {
   margin: 0;
   overflow-x: clip;
   background:
-    radial-gradient(circle at 88% -12%, rgba(226, 27, 45, 0.09), transparent 30rem),
+    radial-gradient(circle at 88% -12%, rgba(236, 0, 22, 0.09), transparent 30rem),
     linear-gradient(rgba(17, 18, 23, 0.018) 1px, transparent 1px),
     linear-gradient(90deg, rgba(17, 18, 23, 0.018) 1px, transparent 1px),
     var(--background);
@@ -52,8 +52,8 @@ a {
   opacity: 0;
   transform: scaleX(0);
   transform-origin: left;
-  background: linear-gradient(90deg, var(--brand-red), #ff4052 55%, var(--brand-yellow));
-  box-shadow: 0 0 14px rgba(226, 27, 45, 0.45);
+  background: linear-gradient(90deg, var(--brand-red), var(--brand-blue) 72%, var(--brand-ink));
+  box-shadow: 0 0 14px rgba(236, 0, 22, 0.38);
 }
 
 .route-progress.is-active {
@@ -196,7 +196,7 @@ a {
 
 .field:focus {
   border-color: var(--brand-blue);
-  box-shadow: 0 0 0 4px #e8efff;
+  box-shadow: 0 0 0 4px rgba(11, 70, 151, 0.12);
 }
 
 .field-label {
@@ -221,7 +221,7 @@ a {
 .admin-shell {
   min-height: 100dvh;
   background:
-    radial-gradient(circle at 100% 0, rgba(23, 70, 162, 0.045), transparent 28rem),
+    radial-gradient(circle at 100% 0, rgba(11, 70, 151, 0.06), transparent 28rem),
     #f4f6f8;
 }
 
@@ -244,9 +244,11 @@ a {
 
 .brand-grid {
   background-image:
+    linear-gradient(120deg, rgba(236, 0, 22, 0.16), transparent 30%),
+    linear-gradient(300deg, rgba(11, 70, 151, 0.34), transparent 42%),
     linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-size: auto, auto, 40px 40px, 40px 40px;
 }
 
 .shelf-shadow {

@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jwlab-studio-operations",
+  "main": "workers/operations.ts",
+  "workers_dev": false,
+  "compatibility_date": "2026-08-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "jwlab-studio",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "database/migrations"
+    }
+  ],
+  "queues": {
+    "producers": [
+      { "binding": "SHIPMENT_QUEUE", "queue": "jwlab-studio-shipments" },
+      { "binding": "TRACKING_QUEUE", "queue": "jwlab-studio-tracking" }
+    ],
+    "consumers": [
+      { "queue": "jwlab-studio-shipments", "max_batch_size": 5, "max_retries": 5, "dead_letter_queue": "jwlab-studio-dead-letter" },
+      { "queue": "jwlab-studio-tracking", "max_batch_size": 10, "max_retries": 5, "dead_letter_queue": "jwlab-studio-dead-letter" }
+    ]
+  },
+  "triggers": { "crons": ["* * * * *", "*/2 * * * *", "*/5 * * * *"] }
+}
