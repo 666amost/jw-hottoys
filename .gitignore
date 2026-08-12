@@ -46,3 +46,4 @@ public/foto-lama.webp.bak
 .env.example
 README.md
 nextonuxtvue.md
+scripts/create-admin.mjs

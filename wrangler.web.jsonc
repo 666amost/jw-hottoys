@@ -1,16 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "jwlab-studio-web",
+  "name": "jwlab",
   "main": ".output/server/index.mjs",
   "compatibility_date": "2026-08-12",
   "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+  "NUXT_PUBLIC_SITE_URL": "https://jwlab.figur.workers.dev",
+  "R2_PUBLIC_BASE_URL": "https://jwlab.figur.workers.dev/api/assets"
+},
   "assets": { "directory": ".output/public" },
   "observability": { "enabled": true },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "jwlab-studio",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "5ad8db2b-5322-4c8f-8091-e302893c5e61",
       "migrations_dir": "database/migrations"
     }
   ],

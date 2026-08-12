@@ -10,7 +10,7 @@
     {
       "binding": "DB",
       "database_name": "jwlab-studio",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "5ad8db2b-5322-4c8f-8091-e302893c5e61",
       "migrations_dir": "database/migrations"
     }
   ],
