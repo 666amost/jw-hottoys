@@ -10,7 +10,7 @@ export function appConfig(event: H3Event) {
   const runtime = useRuntimeConfig(event);
   const bound = event.context.cloudflare?.env as unknown as CloudflareBindings | undefined;
   return {
-    siteUrl: String(runtime.public.siteUrl || "http://localhost:3000"),
+    siteUrl: String(bound?.NUXT_PUBLIC_SITE_URL || runtime.public.siteUrl || "http://localhost:3000"),
     betterAuthSecret: String(bound?.BETTER_AUTH_SECRET || runtime.betterAuthSecret || "development-secret-change-me-32-characters"),
     googleClientId: String(bound?.GOOGLE_CLIENT_ID || runtime.googleClientId || ""),
     googleClientSecret: String(bound?.GOOGLE_CLIENT_SECRET || runtime.googleClientSecret || ""),
