@@ -1,2 +1,23 @@
-<script setup lang="ts">definePageMeta({layout:"admin",middleware:"admin"});const route=useRoute();const{data}=await useFetch("/api/admin/products");const product=computed(()=>data.value?.products.find(item=>item.id===route.params.id));if(!product.value)throw createError({statusCode:404,statusMessage:"Produk tidak ditemukan"});const saved=async()=>refreshNuxtData();useSeoMeta({title:"Edit Produk"});</script>
-<template><div><AdminPageHeader :title="`Edit ${product?.name}`"/><ProductForm v-if="product" :product="product" :categories="data?.categories||[]" @saved="saved"/></div></template>
+<script setup lang="ts">
+definePageMeta({ layout: "admin", middleware: "admin" });
+
+const route = useRoute();
+const { data } = await useFetch("/api/admin/products");
+const product = computed(() => data.value?.products.find((item) => item.id === route.params.id));
+
+if (!product.value) throw createError({ statusCode: 404, statusMessage: "Produk tidak ditemukan" });
+
+const saved = async () => refreshNuxtData();
+
+useSeoMeta({ title: "Edit Produk" });
+</script>
+
+<template>
+  <div>
+    <AdminPageHeader
+      :title="`Edit ${product?.name}`"
+      description="Perbarui informasi produk. Penyesuaian jumlah stok dilakukan dari halaman Inventory."
+    />
+    <ProductForm v-if="product" :product="product" :categories="data?.categories || []" @saved="saved" />
+  </div>
+</template>

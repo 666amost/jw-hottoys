@@ -5,12 +5,14 @@ import {
   PhGauge as Gauge,
   PhList as List,
   PhMegaphone as Megaphone,
+  PhMoon as Moon,
   PhPackage as Package,
   PhPercent as Percent,
   PhPlugsConnected as PlugsConnected,
   PhSignOut as SignOut,
   PhStack as Stack,
   PhStorefront as Storefront,
+  PhSun as Sun,
   PhX as X,
 } from "@phosphor-icons/vue";
 import { authClient } from "~/lib/auth-client";
@@ -19,6 +21,14 @@ const route = useRoute();
 const sidebarOpen = ref(false);
 const signingOut = ref(false);
 const { session } = useAppSession();
+type AdminTheme = "light" | "dark";
+const savedTheme = useCookie<AdminTheme | null>("jwlab-admin-theme", {
+  default: () => null,
+  maxAge: 60 * 60 * 24 * 365,
+  sameSite: "lax",
+});
+const theme = ref<AdminTheme>(savedTheme.value ?? "light");
+let systemTheme: MediaQueryList | undefined;
 
 const navigation = [
   {
@@ -60,6 +70,25 @@ const initials = computed(() => displayName.value
 
 watch(() => route.fullPath, () => { sidebarOpen.value = false; });
 
+function syncSystemTheme(event: MediaQueryListEvent | MediaQueryList) {
+  if (!savedTheme.value) theme.value = event.matches ? "dark" : "light";
+}
+
+function toggleTheme() {
+  theme.value = theme.value === "dark" ? "light" : "dark";
+  savedTheme.value = theme.value;
+  systemTheme?.removeEventListener("change", syncSystemTheme);
+}
+
+onMounted(() => {
+  if (savedTheme.value) return;
+  systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
+  syncSystemTheme(systemTheme);
+  systemTheme.addEventListener("change", syncSystemTheme);
+});
+
+onBeforeUnmount(() => systemTheme?.removeEventListener("change", syncSystemTheme));
+
 async function logout() {
   signingOut.value = true;
   await authClient.signOut();
@@ -69,7 +98,7 @@ async function logout() {
 </script>
 
 <template>
-  <div class="admin-shell min-h-dvh text-slate-900">
+  <div class="admin-shell min-h-dvh text-slate-900" :data-theme="theme">
     <a href="#admin-content" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:font-bold">
       Lewati ke konten
     </a>
@@ -83,12 +112,12 @@ async function logout() {
     />
 
     <aside
-      class="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col overflow-hidden border-r border-slate-200 bg-[#fbfbfc] text-slate-600 shadow-2xl transition-transform duration-300 md:translate-x-0 md:shadow-none"
+      class="admin-sidebar fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col overflow-hidden border-r border-slate-200 bg-[#fbfbfc] text-slate-600 shadow-2xl transition-transform duration-300 md:translate-x-0 md:shadow-none"
       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
     >
       <div class="flex h-20 shrink-0 items-center gap-3 border-b border-slate-200/80 px-6">
-        <NuxtLink to="/" aria-label="JWLAB STUDIO - Beranda" class="grid size-11 shrink-0 place-items-center rounded-xl bg-[#071a3d] shadow-sm">
-          <img src="/brand-mark.svg" alt="" class="size-8" aria-hidden="true">
+        <NuxtLink to="/" aria-label="JWLAB STUDIO - Beranda" class="admin-logo-tile grid size-12 shrink-0 place-items-center rounded-xl shadow-sm">
+          <img :src="'/logo-jwlab-studio.webp'" alt="" class="size-11 object-contain" aria-hidden="true">
         </NuxtLink>
         <div class="min-w-0">
           <p class="truncate text-sm font-black tracking-tight text-slate-950">JWLAB STUDIO</p>
@@ -130,7 +159,7 @@ async function logout() {
       </nav>
 
       <div class="shrink-0 border-t border-slate-200/80 p-4">
-        <div class="mb-2 flex min-w-0 items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3">
+        <div class="admin-account-card mb-2 flex min-w-0 items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3">
           <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-slate-900 text-xs font-black text-white">{{ initials }}</span>
           <div class="min-w-0">
             <p class="truncate text-xs font-bold text-slate-900">{{ displayName }}</p>
@@ -149,7 +178,7 @@ async function logout() {
     </aside>
 
     <div class="min-h-dvh md:pl-[280px]">
-      <header class="sticky top-0 z-30 flex h-16 items-center border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
+      <header class="admin-topbar sticky top-0 z-30 flex h-16 items-center border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
         <button
           type="button"
           class="mr-3 grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 md:hidden"
@@ -171,6 +200,17 @@ async function logout() {
           >
             Lihat toko <ArrowSquareOut :size="16" />
           </NuxtLink>
+          <button
+            type="button"
+            class="admin-theme-toggle grid size-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-950"
+            :aria-label="theme === 'dark' ? 'Gunakan mode terang' : 'Gunakan mode gelap'"
+            :title="theme === 'dark' ? 'Mode terang' : 'Mode gelap'"
+            :aria-pressed="theme === 'dark'"
+            @click="toggleTheme"
+          >
+            <Sun v-if="theme === 'dark'" :size="18" weight="bold" />
+            <Moon v-else :size="18" weight="bold" />
+          </button>
           <span class="grid size-9 place-items-center rounded-full bg-[#111318] text-[11px] font-black text-white ring-4 ring-slate-100">{{ initials }}</span>
         </div>
       </header>
