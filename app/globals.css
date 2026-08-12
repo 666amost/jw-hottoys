@@ -42,6 +42,31 @@ a {
   transition: color 160ms ease;
 }
 
+:focus-visible {
+  outline: 3px solid rgba(11, 70, 151, 0.32);
+  outline-offset: 3px;
+}
+
+.page-enter-active,
+.page-leave-active {
+  transition:
+    opacity 220ms cubic-bezier(.2, .75, .3, 1),
+    transform 280ms cubic-bezier(.2, .75, .3, 1),
+    filter 220ms ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  filter: blur(2px);
+  transform: translateY(10px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  filter: blur(1px);
+  transform: translateY(-4px) scale(.997);
+}
+
 .route-progress {
   position: fixed;
   inset: 0 auto auto 0;
@@ -221,8 +246,11 @@ a {
 .admin-shell {
   min-height: 100dvh;
   background:
-    radial-gradient(circle at 100% 0, rgba(11, 70, 151, 0.06), transparent 28rem),
+    radial-gradient(circle at 100% 0, rgba(11, 70, 151, 0.075), transparent 30rem),
+    linear-gradient(rgba(15, 23, 42, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.018) 1px, transparent 1px),
     #f4f6f8;
+  background-size: auto, 36px 36px, 36px 36px, auto;
 }
 
 .admin-shell .surface {
@@ -294,5 +322,10 @@ a {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .page-enter-active,
+  .page-leave-active {
+    transition: none;
   }
 }

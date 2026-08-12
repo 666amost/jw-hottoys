@@ -1,1 +1,8 @@
-<template><div class="store-shell"><SiteHeader/><main><slot/></main><SiteFooter/></div></template>
+<template>
+  <div class="store-shell">
+    <SiteHeader />
+    <main id="main-content"><slot /></main>
+    <SiteFooter />
+    <MobileBottomNav />
+  </div>
+</template>
