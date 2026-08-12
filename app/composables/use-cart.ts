@@ -18,8 +18,9 @@ export function useCart() {
   function update(variantId: string, quantity: number) {
     const line = lines.value.find((item) => item.variantId === variantId);
     if (!line) return;
-    if (quantity <= 0) lines.value = lines.value.filter((item) => item.variantId !== variantId);
-    else line.quantity = Math.min(line.availableStock, quantity);
+    const safeQuantity = Number.isFinite(quantity) ? Math.floor(quantity) : line.quantity;
+    if (safeQuantity <= 0) lines.value = lines.value.filter((item) => item.variantId !== variantId);
+    else line.quantity = Math.max(1, Math.min(line.availableStock, safeQuantity));
   }
   function clear() { lines.value = []; }
   return { lines, count, subtotal, add, update, clear };

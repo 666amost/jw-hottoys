@@ -84,6 +84,7 @@ async function pick(event: Event) {
 }
 
 async function save() {
+  if (loading.value || imageProcessing.value) return;
   if (!props.categories.length) {
     error.value = "Buat minimal satu kategori sebelum menyimpan produk.";
     return;
@@ -100,6 +101,9 @@ async function save() {
     if (image.value) body.set("image", image.value);
     const path = props.product ? `/api/admin/products/${props.product.id}` : "/api/admin/products";
     const result = await $fetch<{ id?: string }>(path, { method: props.product ? "PATCH" : "POST", body });
+    if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+    previewUrl.value = null;
+    image.value = null;
     emit("saved", result.id || props.product!.id);
   } catch (cause: any) {
     error.value = cause?.data?.error?.message || cause?.data?.statusMessage || "Produk gagal disimpan.";

@@ -4,7 +4,8 @@ definePageMeta({ layout: "admin", middleware: "admin" });
 const { data } = await useFetch("/api/admin/products");
 
 async function saved(id: string) {
-  await navigateTo(`/admin/products/${id}/edit`);
+  await refreshNuxtData("/api/admin/products");
+  await navigateTo({ path: "/admin/products", query: { created: id } });
 }
 
 useSeoMeta({ title: "Produk Baru" });

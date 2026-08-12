@@ -1,11 +1,27 @@
 <script setup lang="ts">
+import {
+  PhCheckCircle as CheckCircle,
+  PhPencilSimple as PencilSimple,
+  PhStorefront as Storefront,
+  PhX as X,
+} from "@phosphor-icons/vue";
 import { formatCurrency } from "~~/shared/format";
 
 definePageMeta({ layout: "admin", middleware: "admin" });
+const route = useRoute();
+const router = useRouter();
 const { data, refresh } = await useFetch("/api/admin/products");
 const category = reactive({ name: "", slug: "", description: "" });
 const categoryError = ref("");
 const categoryLoading = ref(false);
+const createdId = computed(() => typeof route.query.created === "string" ? route.query.created : "");
+const createdProduct = computed(() => data.value?.products.find((product) => product.id === createdId.value));
+
+async function dismissCreated() {
+  const query = { ...route.query };
+  delete query.created;
+  await router.replace({ query });
+}
 
 function slugify() {
   category.slug = category.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -40,6 +56,25 @@ useSeoMeta({ title: "Admin Produk" });
         Produk baru
       </NuxtLink>
     </div>
+
+    <section
+      v-if="createdId"
+      role="status"
+      aria-live="polite"
+      class="flex flex-col gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950 shadow-sm sm:flex-row sm:items-center"
+    >
+      <span class="grid size-12 shrink-0 place-items-center rounded-full bg-emerald-600 text-white"><CheckCircle :size="27" weight="fill" /></span>
+      <div class="min-w-0 flex-1">
+        <p class="text-[10px] font-black uppercase tracking-[.16em] text-emerald-700">Upload selesai</p>
+        <h2 class="mt-1 text-lg font-black">{{ createdProduct?.name || "Produk baru" }} berhasil dibuat</h2>
+        <p class="mt-1 text-sm leading-6 text-emerald-800">Gambar sudah tersimpan di R2 dan data produk sudah masuk ke katalog{{ createdProduct?.published ? " publik" : " sebagai draft" }}.</p>
+      </div>
+      <div class="flex shrink-0 flex-wrap items-center gap-2">
+        <NuxtLink v-if="createdProduct" :to="`/admin/products/${createdProduct.id}/edit`" class="inline-flex min-h-10 items-center gap-2 rounded-full border border-emerald-300 bg-white px-4 text-xs font-black text-emerald-900"><PencilSimple :size="16" /> Edit produk</NuxtLink>
+        <NuxtLink v-if="createdProduct?.published" :to="`/products/${createdProduct.slug}`" target="_blank" class="inline-flex min-h-10 items-center gap-2 rounded-full bg-emerald-700 px-4 text-xs font-black text-white"><Storefront :size="16" /> Lihat di toko</NuxtLink>
+        <button type="button" class="grid size-10 place-items-center rounded-full text-emerald-800 hover:bg-emerald-100" aria-label="Tutup notifikasi" @click="dismissCreated"><X :size="18" /></button>
+      </div>
+    </section>
 
     <section class="surface p-6">
       <div class="grid gap-6 lg:grid-cols-[1fr_1.25fr]">
