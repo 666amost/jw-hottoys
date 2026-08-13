@@ -7,7 +7,8 @@ const sessionComposable = readFileSync(resolve(root, "app/composables/use-sessio
 
 describe("session SSR requests", () => {
   it("preserves Cloudflare bindings and cookies in internal requests", () => {
-    expect(sessionComposable).toContain('useRequestFetch()("/api/session")');
+    expect(sessionComposable).toContain('useRequestFetch()("/api/session", {');
     expect(sessionComposable).not.toContain('await $fetch("/api/session")');
+    expect(sessionComposable).toContain("query: { fresh: Date.now() }");
   });
 });

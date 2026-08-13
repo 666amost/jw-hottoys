@@ -10,6 +10,7 @@ const password = ref("");
 const showPassword = ref(false);
 const loading = ref(false);
 const error = ref("");
+const { refresh } = useAppSession();
 
 async function login() {
   loading.value = true;
@@ -20,7 +21,7 @@ async function login() {
     loading.value = false;
     return;
   }
-  const session = await $fetch("/api/session");
+  const session = await refresh();
   if (!session.isAdmin) {
     await authClient.signOut();
     error.value = "Akun tidak memiliki role admin.";

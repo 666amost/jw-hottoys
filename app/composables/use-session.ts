@@ -5,7 +5,11 @@ export function useAppSession() {
     // During SSR, useRequestFetch keeps the parent H3 event context attached to
     // the internal request. Cloudflare bindings (notably D1's `DB`) and the
     // OAuth session cookie would otherwise be lost by a plain global $fetch.
-    session.value = await useRequestFetch()("/api/session");
+    session.value = await useRequestFetch()("/api/session", {
+      query: { fresh: Date.now() },
+      credentials: "include",
+      headers: { "cache-control": "no-cache" },
+    });
     loaded.value = true;
     return session.value;
   }
