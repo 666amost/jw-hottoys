@@ -12,9 +12,9 @@ const retryEndpoint = readFileSync(resolve(root, "server/api/admin/shipments/[or
 
 describe("BCE deployment contract", () => {
   it("configures the BCE API in both workers and the public tracking URL in the web worker", () => {
-    expect(webConfig).toContain('"BCE_API_URL": "https://bcexp.id"');
-    expect(webConfig).toContain('"NUXT_PUBLIC_BCE_TRACKING_URL": "https://bcexp.id/track"');
-    expect(operationsConfig).toContain('"BCE_API_URL": "https://bcexp.id"');
+    expect(webConfig).toContain('"BCE_API_URL": "https://www.bcexp.id"');
+    expect(webConfig).toContain('"NUXT_PUBLIC_BCE_TRACKING_URL": "https://www.bcexp.id/track"');
+    expect(operationsConfig).toContain('"BCE_API_URL": "https://www.bcexp.id"');
     expect(nuxtConfig).toContain('bceTrackingUrl: "https://bcexp.id/track"');
   });
 

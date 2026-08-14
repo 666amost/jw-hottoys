@@ -6,6 +6,7 @@ const root = resolve(import.meta.dirname, "..");
 const migration = readFileSync(resolve(root, "database/migrations/0001_initial.sql"), "utf8");
 const payment = readFileSync(resolve(root, "server/utils/integrations.ts"), "utf8");
 const webhook = readFileSync(resolve(root, "server/api/webhooks/sumopod.post.ts"), "utf8");
+const bceWebhook = readFileSync(resolve(root, "server/api/webhooks/bce.post.ts"), "utf8");
 const operations = readFileSync(resolve(root, "workers/operations.ts"), "utf8");
 const checkout = readFileSync(resolve(root, "server/utils/commerce.ts"), "utf8");
 
@@ -42,5 +43,10 @@ describe("D1 payment and stock contract", () => {
     expect(operations).toContain('"Idempotency-Key"');
     expect(operations).toContain("mapBceTrackingStatus");
     expect(operations).toContain("status shipment dipertahankan");
+    expect(operations).not.toContain('|| mapped === "exception"');
+    expect(operations).not.toContain('|| mappedOverall === "exception"');
+    expect(bceWebhook).not.toContain('|| parsed.data.status === "exception"');
+    expect(operations).toContain("deliveredOrderReconciliationStatements");
+    expect(bceWebhook).toContain("deliveredOrderReconciliationStatements");
   });
 });

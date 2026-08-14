@@ -1,4 +1,5 @@
 import { isPermanentBceHttpStatus, mapBceTrackingStatus } from "../shared/bce-integration";
+import { deliveredOrderReconciliationStatements } from "../shared/order-fulfillment";
 
 interface OperationsEnv extends CloudflareBindings {
   DB: D1Database;
@@ -105,7 +106,7 @@ async function processTracking(env: OperationsEnv, body: QueueBody) {
     }
     const inserted = await env.DB.prepare("INSERT OR IGNORE INTO shipment_events(id,shipment_id,external_event_id,status,location,note,occurred_at) VALUES(?,?,?,?,?,?,?)")
       .bind(crypto.randomUUID(), shipment.id, item.id, mapped, item.location || "", item.notes || item.note || "", item.created_at).run();
-    if (inserted.meta.changes && (rank(mapped) >= rank(currentStatus) || mapped === "exception")) currentStatus = mapped;
+    if (inserted.meta.changes && rank(mapped) >= rank(currentStatus)) currentStatus = mapped;
   }
   const mappedOverall = mapBceTrackingStatus(tracking.status);
   if (!mappedOverall) {
@@ -113,14 +114,17 @@ async function processTracking(env: OperationsEnv, body: QueueBody) {
       awb: shipment.awb_number,
       status: tracking.status,
     });
-  } else if (rank(mappedOverall) >= rank(currentStatus) || mappedOverall === "exception") {
+  } else if (rank(mappedOverall) >= rank(currentStatus)) {
     currentStatus = mappedOverall;
   }
   const next = ["delivered", "exception"].includes(currentStatus) ? null : new Date(Date.now() + 5 * 60_000).toISOString();
-  await env.DB.batch([
+  const now = new Date().toISOString();
+  const statements: D1PreparedStatement[] = [
     env.DB.prepare("UPDATE shipments SET status=?,error_message=NULL,retry_count=0,next_tracking_at=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").bind(currentStatus, next, shipment.id),
     env.DB.prepare("UPDATE outbox_jobs SET status='completed',updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").bind(body.outboxId),
-  ]);
+  ];
+  if (currentStatus === "delivered") statements.push(...deliveredOrderReconciliationStatements(env.DB, shipment.id, now));
+  await env.DB.batch(statements);
 }
 
 async function recordQueueFailure(env: OperationsEnv, body: QueueBody, error: unknown) {

@@ -72,4 +72,5 @@ export type OrderSummary = {
   createdAt: string;
   itemCount: number;
   awbNumber?: string | null;
+  shipmentStatus?: ShipmentStatus | null;
 };

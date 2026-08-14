@@ -9,6 +9,7 @@ import {
   PhWarning as Warning,
 } from "@phosphor-icons/vue";
 import { formatCurrency, formatDate } from "~~/shared/format";
+import { getOrderDisplayStatus } from "~~/shared/order-display-status";
 
 definePageMeta({ layout: "admin", middleware: "admin" });
 
@@ -18,6 +19,8 @@ type DashboardOrder = {
   recipient_name: string;
   payment_status: string;
   status: string;
+  shipment_status: string | null;
+  awb_number: string | null;
   total_amount: number;
   created_at: string;
 };
@@ -67,23 +70,27 @@ const quickActions = [
 ];
 
 const statusStyles: Record<string, string> = {
-  pending_payment: "bg-amber-50 text-amber-700 ring-amber-600/10",
+  awaiting_payment: "bg-amber-50 text-amber-700 ring-amber-600/10",
+  payment_review: "bg-amber-50 text-amber-700 ring-amber-600/10",
+  payment_failed: "bg-red-50 text-red-700 ring-red-600/10",
+  payment_expired: "bg-slate-100 text-slate-600 ring-slate-500/10",
   paid: "bg-blue-50 text-blue-700 ring-blue-600/10",
+  pending_awb: "bg-blue-50 text-blue-700 ring-blue-600/10",
+  awb_created: "bg-indigo-50 text-indigo-700 ring-indigo-600/10",
+  picked_up: "bg-violet-50 text-violet-700 ring-violet-600/10",
+  in_transit: "bg-violet-50 text-violet-700 ring-violet-600/10",
   processing: "bg-violet-50 text-violet-700 ring-violet-600/10",
   fulfilled: "bg-emerald-50 text-emerald-700 ring-emerald-600/10",
+  exception: "bg-red-50 text-red-700 ring-red-600/10",
   cancelled: "bg-slate-100 text-slate-600 ring-slate-500/10",
 };
 
-const statusLabels: Record<string, string> = {
-  pending_payment: "Menunggu bayar",
-  paid: "Sudah dibayar",
-  processing: "Diproses",
-  fulfilled: "Selesai",
-  cancelled: "Dibatalkan",
-};
-
 function orderStatus(order: DashboardOrder) {
-  return order.status || order.payment_status;
+  return getOrderDisplayStatus({
+    orderStatus: order.status,
+    paymentStatus: order.payment_status,
+    shipmentStatus: order.shipment_status,
+  });
 }
 
 useSeoMeta({ title: "Admin Dashboard" });
@@ -128,34 +135,27 @@ useSeoMeta({ title: "Admin Dashboard" });
           </NuxtLink>
         </div>
 
-        <div v-if="orders.length" class="overflow-x-auto">
-          <table class="w-full min-w-[680px] text-left text-sm">
-            <thead class="bg-slate-50/70 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-              <tr>
-                <th class="px-6 py-3">Order</th>
-                <th class="px-4 py-3">Pelanggan</th>
-                <th class="px-4 py-3">Status</th>
-                <th class="px-4 py-3">Tanggal</th>
-                <th class="px-6 py-3 text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              <tr v-for="order in orders" :key="order.id" class="transition hover:bg-slate-50/70">
-                <td class="px-6 py-4 font-black text-slate-900">{{ order.order_number }}</td>
-                <td class="px-4 py-4 text-slate-600">{{ order.recipient_name }}</td>
-                <td class="px-4 py-4">
-                  <span
-                    class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold ring-1 ring-inset"
-                    :class="statusStyles[orderStatus(order)] ?? 'bg-slate-100 text-slate-600 ring-slate-500/10'"
-                  >
-                    {{ statusLabels[orderStatus(order)] ?? orderStatus(order) }}
-                  </span>
-                </td>
-                <td class="px-4 py-4 text-xs text-slate-500">{{ formatDate(order.created_at) }}</td>
-                <td class="px-6 py-4 text-right font-bold text-slate-900">{{ formatCurrency(order.total_amount) }}</td>
-              </tr>
-            </tbody>
-          </table>
+        <div v-if="orders.length" class="divide-y divide-slate-100">
+          <article
+            v-for="order in orders"
+            :key="order.id"
+            class="grid min-w-0 gap-3 px-5 py-4 transition hover:bg-slate-50/70 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6"
+          >
+            <div class="min-w-0">
+              <p class="break-words text-sm font-black text-slate-900">{{ order.order_number }}</p>
+              <p class="mt-1 truncate text-xs text-slate-500" :title="order.recipient_name">{{ order.recipient_name }} · {{ formatDate(order.created_at) }}</p>
+              <div class="mt-2 flex min-w-0 flex-wrap items-center gap-2">
+                <span
+                  class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold ring-1 ring-inset"
+                  :class="statusStyles[orderStatus(order).key] ?? 'bg-slate-100 text-slate-600 ring-slate-500/10'"
+                >
+                  {{ orderStatus(order).label }}
+                </span>
+                <span class="min-w-0 truncate text-[11px] text-slate-400">{{ orderStatus(order).detail }}</span>
+              </div>
+            </div>
+            <p class="shrink-0 text-sm font-black text-slate-950 sm:text-right">{{ formatCurrency(order.total_amount) }}</p>
+          </article>
         </div>
         <div v-else class="grid min-h-56 place-items-center px-6 py-10 text-center">
           <div>
