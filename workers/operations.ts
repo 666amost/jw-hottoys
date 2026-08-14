@@ -1,3 +1,5 @@
+import { isPermanentBceHttpStatus, mapBceTrackingStatus } from "../shared/bce-integration";
+
 interface OperationsEnv extends CloudflareBindings {
   DB: D1Database;
   SHIPMENT_QUEUE: Queue;
@@ -8,8 +10,17 @@ interface OperationsEnv extends CloudflareBindings {
 
 type QueueBody = { outboxId: string; orderId?: string; shipmentId?: string };
 const statusRank: Record<string, number> = { pending_awb: 0, awb_created: 1, picked_up: 2, in_transit: 3, delivered: 4, exception: 3 };
-const statusMap: Record<string, string> = { warehouse: "awb_created", processed: "awb_created", awb_created: "awb_created", picked_up: "picked_up", out_for_delivery: "in_transit", in_transit: "in_transit", delivered: "delivered", exception: "exception" };
 const rank = (status: string) => statusRank[status] ?? -1;
+
+class BceHttpError extends Error {
+  readonly retryable: boolean;
+
+  constructor(operation: string, readonly status: number) {
+    super(`BCE ${operation} gagal (${status}).`);
+    this.name = "BceHttpError";
+    this.retryable = !isPermanentBceHttpStatus(status);
+  }
+}
 
 async function bceFetch(env: OperationsEnv, path: string, init: RequestInit) {
   if (!env.BCE_API_URL || !env.BCE_PARTNER_KEY) throw new Error("BCE belum dikonfigurasi.");
@@ -52,7 +63,8 @@ async function processShipment(env: OperationsEnv, body: QueueBody) {
     }),
   });
   const raw = await response.json().catch(() => null) as Record<string, unknown> | null;
-  if (!response.ok || !raw) throw new Error(`BCE menolak pembuatan shipment (${response.status}).`);
+  if (!response.ok) throw new BceHttpError("pembuatan shipment", response.status);
+  if (!raw) throw new Error("BCE tidak mengembalikan respons shipment yang valid.");
   const value = (raw.data && typeof raw.data === "object" ? raw.data : raw) as Record<string, unknown>;
   const awb = String(value.awb_number || value.awb || "");
   if (!awb) throw new Error("BCE tidak mengembalikan AWB.");
@@ -61,7 +73,7 @@ async function processShipment(env: OperationsEnv, body: QueueBody) {
   const outboxId = crypto.randomUUID();
   await env.DB.batch([
     env.DB.prepare("INSERT OR IGNORE INTO shipments(id,order_id,provider,status,created_at,updated_at) VALUES(?,?,'BCE','pending_awb',?,?)").bind(shipmentId, order.id, now, now),
-    env.DB.prepare("UPDATE shipments SET awb_number=?,status='awb_created',error_message=NULL,next_tracking_at=?,updated_at=? WHERE order_id=? AND awb_number IS NULL")
+    env.DB.prepare("UPDATE shipments SET awb_number=?,status='awb_created',error_message=NULL,retry_count=0,next_tracking_at=?,updated_at=? WHERE order_id=? AND awb_number IS NULL")
       .bind(awb, new Date(Date.now() + 5 * 60_000).toISOString(), now, order.id),
     env.DB.prepare("INSERT OR IGNORE INTO shipment_events(id,shipment_id,external_event_id,status,location,note,occurred_at) VALUES(?,?,?,'awb_created','Jakarta','Resi BCE Express berhasil dibuat',?)")
       .bind(crypto.randomUUID(), shipmentId, `created:${awb}`, now),
@@ -77,22 +89,53 @@ async function processTracking(env: OperationsEnv, body: QueueBody) {
   const shipment = await env.DB.prepare("SELECT id,awb_number,status FROM shipments WHERE id=?").bind(body.shipmentId).first<{ id: string; awb_number: string | null; status: string }>();
   if (!shipment?.awb_number) throw new Error("AWB belum tersedia.");
   const response = await bceFetch(env, `/api/v1/partner/shipments/${encodeURIComponent(shipment.awb_number)}/tracking`, { method: "GET" });
-  if (!response.ok) throw new Error(`BCE tracking gagal (${response.status}).`);
-  const tracking = await response.json() as { status: string; events?: Array<{ id: string; status: string; location?: string | null; notes?: string | null; note?: string | null; created_at: string }> };
+  if (!response.ok) throw new BceHttpError("tracking", response.status);
+  const tracking = await response.json().catch(() => null) as { status: string; events?: Array<{ id: string; status: string; location?: string | null; notes?: string | null; note?: string | null; created_at: string }> } | null;
+  if (!tracking) throw new Error("BCE tidak mengembalikan respons tracking yang valid.");
   let currentStatus = shipment.status;
   for (const item of tracking.events || []) {
-    const mapped = statusMap[item.status] || "exception";
+    const mapped = mapBceTrackingStatus(item.status);
+    if (!mapped) {
+      console.warn("[JWLAB BCE] Status event tracking tidak dikenal; status shipment dipertahankan.", {
+        awb: shipment.awb_number,
+        eventId: item.id,
+        status: item.status,
+      });
+      continue;
+    }
     const inserted = await env.DB.prepare("INSERT OR IGNORE INTO shipment_events(id,shipment_id,external_event_id,status,location,note,occurred_at) VALUES(?,?,?,?,?,?,?)")
       .bind(crypto.randomUUID(), shipment.id, item.id, mapped, item.location || "", item.notes || item.note || "", item.created_at).run();
     if (inserted.meta.changes && (rank(mapped) >= rank(currentStatus) || mapped === "exception")) currentStatus = mapped;
   }
-  const mappedOverall = statusMap[tracking.status] || currentStatus;
-  if (rank(mappedOverall) >= rank(currentStatus) || mappedOverall === "exception") currentStatus = mappedOverall;
+  const mappedOverall = mapBceTrackingStatus(tracking.status);
+  if (!mappedOverall) {
+    console.warn("[JWLAB BCE] Status tracking keseluruhan tidak dikenal; status shipment dipertahankan.", {
+      awb: shipment.awb_number,
+      status: tracking.status,
+    });
+  } else if (rank(mappedOverall) >= rank(currentStatus) || mappedOverall === "exception") {
+    currentStatus = mappedOverall;
+  }
   const next = ["delivered", "exception"].includes(currentStatus) ? null : new Date(Date.now() + 5 * 60_000).toISOString();
   await env.DB.batch([
-    env.DB.prepare("UPDATE shipments SET status=?,next_tracking_at=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").bind(currentStatus, next, shipment.id),
+    env.DB.prepare("UPDATE shipments SET status=?,error_message=NULL,retry_count=0,next_tracking_at=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").bind(currentStatus, next, shipment.id),
     env.DB.prepare("UPDATE outbox_jobs SET status='completed',updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").bind(body.outboxId),
   ]);
+}
+
+async function recordQueueFailure(env: OperationsEnv, body: QueueBody, error: unknown) {
+  const message = error instanceof Error ? error.message.slice(0, 300) : "Worker failed";
+  const now = new Date().toISOString();
+  const statements: D1PreparedStatement[] = [
+    env.DB.prepare("UPDATE outbox_jobs SET status='failed',attempts=attempts+1,last_error=?,updated_at=? WHERE id=?").bind(message, now, body.outboxId),
+  ];
+  if (body.orderId) {
+    statements.push(env.DB.prepare("UPDATE shipments SET error_message=?,retry_count=retry_count+1,updated_at=? WHERE order_id=?").bind(message, now, body.orderId));
+  }
+  if (body.shipmentId) {
+    statements.push(env.DB.prepare("UPDATE shipments SET error_message=?,retry_count=retry_count+1,updated_at=? WHERE id=?").bind(message, now, body.shipmentId));
+  }
+  await env.DB.batch(statements);
 }
 
 async function expireOrders(env: OperationsEnv) {
@@ -110,7 +153,7 @@ async function expireOrders(env: OperationsEnv) {
 }
 
 async function scheduleTracking(env: OperationsEnv) {
-  const { results } = await env.DB.prepare("SELECT id FROM shipments WHERE status NOT IN ('delivered','exception') AND awb_number IS NOT NULL AND (next_tracking_at IS NULL OR unixepoch(next_tracking_at)<=unixepoch('now')) LIMIT 50").all<{ id: string }>();
+  const { results } = await env.DB.prepare("SELECT id FROM shipments WHERE status NOT IN ('delivered','exception') AND awb_number IS NOT NULL AND error_message IS NULL AND (next_tracking_at IS NULL OR unixepoch(next_tracking_at)<=unixepoch('now')) LIMIT 50").all<{ id: string }>();
   const now = new Date().toISOString();
   for (const shipment of results) {
     const bucket = Math.floor(Date.now() / 120_000);
@@ -121,14 +164,14 @@ async function scheduleTracking(env: OperationsEnv) {
 }
 
 async function drainOutbox(env: OperationsEnv) {
-  const { results } = await env.DB.prepare("SELECT id,kind,payload FROM outbox_jobs WHERE status IN ('pending','failed') AND unixepoch(available_at)<=unixepoch('now') ORDER BY created_at LIMIT 50").all<{ id: string; kind: string; payload: string }>();
+  const { results } = await env.DB.prepare("SELECT id,kind,payload FROM outbox_jobs WHERE status='pending' AND unixepoch(available_at)<=unixepoch('now') ORDER BY created_at LIMIT 50").all<{ id: string; kind: string; payload: string }>();
   for (const job of results) {
     try {
       const queue = job.kind === "shipment_creation" ? env.SHIPMENT_QUEUE : env.TRACKING_QUEUE;
       await queue.send({ outboxId: job.id, ...JSON.parse(job.payload) });
       await env.DB.prepare("UPDATE outbox_jobs SET status='sent',attempts=attempts+1,last_error=NULL,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").bind(job.id).run();
     } catch (error) {
-      await env.DB.prepare("UPDATE outbox_jobs SET status='failed',attempts=attempts+1,last_error=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?")
+      await env.DB.prepare("UPDATE outbox_jobs SET status='pending',attempts=attempts+1,last_error=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?")
         .bind(error instanceof Error ? error.message.slice(0, 300) : "Queue send failed", job.id).run();
     }
   }
@@ -143,9 +186,9 @@ export default {
         else await processTracking(env, message.body);
         message.ack();
       } catch (error) {
-        await env.DB.prepare("UPDATE outbox_jobs SET status='failed',attempts=attempts+1,last_error=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?")
-          .bind(error instanceof Error ? error.message.slice(0, 300) : "Worker failed", message.body.outboxId).run();
-        message.retry({ delaySeconds: Math.min(3600, 30 * 2 ** message.attempts) });
+        await recordQueueFailure(env, message.body, error);
+        if (error instanceof BceHttpError && !error.retryable) message.ack();
+        else message.retry({ delaySeconds: Math.min(3600, 30 * 2 ** message.attempts) });
       }
     }
   },

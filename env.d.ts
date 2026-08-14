@@ -9,6 +9,7 @@ declare global {
     SHIPMENT_QUEUE: Queue;
     TRACKING_QUEUE: Queue;
     NUXT_PUBLIC_SITE_URL?: string;
+    NUXT_PUBLIC_BCE_TRACKING_URL?: string;
     BETTER_AUTH_SECRET?: string;
     GOOGLE_CLIENT_ID?: string;
     GOOGLE_CLIENT_SECRET?: string;

@@ -40,5 +40,7 @@ describe("D1 payment and stock contract", () => {
     expect(migration).toContain("UNIQUE(shipment_id, external_event_id)");
     expect(operations).toContain("const statusRank");
     expect(operations).toContain('"Idempotency-Key"');
+    expect(operations).toContain("mapBceTrackingStatus");
+    expect(operations).toContain("status shipment dipertahankan");
   });
 });

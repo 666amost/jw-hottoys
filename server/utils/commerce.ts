@@ -106,7 +106,7 @@ export async function cancelCheckout(db: D1Database, orderId: string, reason: st
 }
 
 export async function dispatchOutbox(env: Pick<CloudflareBindings, "DB" | "SHIPMENT_QUEUE" | "TRACKING_QUEUE">, id: string) {
-  const job = await env.DB.prepare("SELECT id,kind,payload FROM outbox_jobs WHERE id=? AND status IN ('pending','failed')").bind(id).first<{ id: string; kind: string; payload: string }>();
+  const job = await env.DB.prepare("SELECT id,kind,payload FROM outbox_jobs WHERE id=? AND status='pending'").bind(id).first<{ id: string; kind: string; payload: string }>();
   if (!job) return;
   const queue = job.kind === "shipment_creation" ? env.SHIPMENT_QUEUE : env.TRACKING_QUEUE;
   await queue.send({ outboxId: job.id, ...JSON.parse(job.payload) });

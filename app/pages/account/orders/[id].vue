@@ -1,2 +1,67 @@
-<script setup lang="ts">import{formatCurrency,formatDate}from"~~/shared/format";definePageMeta({middleware:"auth"});const route=useRoute();const{data}=await useFetch(`/api/account/orders/${route.params.id}`);if(!data.value)throw createError({statusCode:404,statusMessage:"Pesanan tidak ditemukan"});useSeoMeta({title:()=>String((data.value?.order as any)?.order_number||"Detail Pesanan")});</script>
-<template><section class="container-shell py-12"><p class="eyebrow">Order detail</p><h1 class="section-title mt-3">{{(data?.order as any)?.order_number}}</h1><div class="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]"><div class="grid gap-3"><article v-for="item in data?.items" :key="(item as any).id" class="surface flex justify-between p-5"><div><b>{{(item as any).product_name}}</b><p class="text-sm text-slate-500">{{(item as any).variant_name}} · {{(item as any).quantity}} pcs</p></div><b>{{formatCurrency((item as any).line_total)}}</b></article><section v-if="data?.shipmentEvents?.length" class="surface p-6"><h2 class="font-black">Perjalanan paket</h2><div class="mt-4 grid gap-4"><div v-for="event in data.shipmentEvents" :key="(event as any).id" class="border-l-2 border-[#0b4697] pl-4"><b class="text-sm uppercase">{{(event as any).status}}</b><p class="text-xs text-slate-500">{{(event as any).note}} · {{formatDate((event as any).occurred_at)}}</p></div></div></section></div><aside class="surface h-fit p-6"><p class="text-sm text-slate-500">Status</p><p class="mt-1 font-black uppercase">{{(data?.order as any)?.payment_status}} · {{(data?.order as any)?.status}}</p><p class="mt-5 text-sm text-slate-500">Total</p><p class="mt-1 text-2xl font-black">{{formatCurrency(Number((data?.order as any)?.total_amount||0))}}</p><p v-if="(data?.order as any)?.awb_number" class="mt-5 text-sm"><b>AWB BCE:</b> {{(data?.order as any)?.awb_number}}</p><a v-if="(data?.order as any)?.payment_url && (data?.order as any)?.payment_status==='pending'" :href="(data?.order as any)?.payment_url" class="mt-6 block rounded-full bg-[#0b4697] px-5 py-3 text-center font-black text-white">Lanjut pembayaran</a></aside></div></section></template>
+<script setup lang="ts">
+import { buildBceTrackingUrl } from "~~/shared/bce-integration";
+import { formatCurrency, formatDate } from "~~/shared/format";
+
+definePageMeta({ middleware: "auth" });
+const route = useRoute();
+const config = useRuntimeConfig();
+const { data } = await useFetch(`/api/account/orders/${route.params.id}`);
+if (!data.value) throw createError({ statusCode: 404, statusMessage: "Pesanan tidak ditemukan" });
+
+const trackingUrl = computed(() => {
+  const awb = String((data.value?.order as { awb_number?: string | null } | undefined)?.awb_number || "");
+  return buildBceTrackingUrl(String(config.public.bceTrackingUrl || ""), awb);
+});
+
+useSeoMeta({ title: () => String((data.value?.order as { order_number?: string } | undefined)?.order_number || "Detail Pesanan") });
+</script>
+
+<template>
+  <section class="container-shell py-12">
+    <p class="eyebrow">Order detail</p>
+    <h1 class="section-title mt-3">{{ (data?.order as any)?.order_number }}</h1>
+    <div class="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
+      <div class="grid gap-3">
+        <article v-for="item in data?.items" :key="(item as any).id" class="surface flex justify-between p-5">
+          <div>
+            <b>{{ (item as any).product_name }}</b>
+            <p class="text-sm text-slate-500">{{ (item as any).variant_name }} · {{ (item as any).quantity }} pcs</p>
+          </div>
+          <b>{{ formatCurrency((item as any).line_total) }}</b>
+        </article>
+        <section v-if="data?.shipmentEvents?.length" class="surface p-6">
+          <h2 class="font-black">Perjalanan paket</h2>
+          <div class="mt-4 grid gap-4">
+            <div v-for="event in data.shipmentEvents" :key="(event as any).id" class="border-l-2 border-[#0b4697] pl-4">
+              <b class="text-sm uppercase">{{ (event as any).status }}</b>
+              <p class="text-xs text-slate-500">{{ (event as any).note }} · {{ formatDate((event as any).occurred_at) }}</p>
+            </div>
+          </div>
+        </section>
+      </div>
+      <aside class="surface h-fit p-6">
+        <p class="text-sm text-slate-500">Status</p>
+        <p class="mt-1 font-black uppercase">{{ (data?.order as any)?.payment_status }} · {{ (data?.order as any)?.status }}</p>
+        <p class="mt-5 text-sm text-slate-500">Total</p>
+        <p class="mt-1 text-2xl font-black">{{ formatCurrency(Number((data?.order as any)?.total_amount || 0)) }}</p>
+        <p v-if="(data?.order as any)?.awb_number" class="mt-5 text-sm"><b>AWB BCE:</b> {{ (data?.order as any)?.awb_number }}</p>
+        <a
+          v-if="trackingUrl"
+          :href="trackingUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mt-3 block text-sm font-black text-[#0b4697] underline"
+        >
+          Lacak di BCE Express
+        </a>
+        <a
+          v-if="(data?.order as any)?.payment_url && (data?.order as any)?.payment_status === 'pending'"
+          :href="(data?.order as any)?.payment_url"
+          class="mt-6 block rounded-full bg-[#0b4697] px-5 py-3 text-center font-black text-white"
+        >
+          Lanjut pembayaran
+        </a>
+      </aside>
+    </div>
+  </section>
+</template>

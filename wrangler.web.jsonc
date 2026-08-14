@@ -5,9 +5,11 @@
   "compatibility_date": "2026-08-12",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-  "NUXT_PUBLIC_SITE_URL": "https://jwlab.figur.workers.dev",
-  "R2_PUBLIC_BASE_URL": "https://jwlab.figur.workers.dev/api/assets"
-},
+    "NUXT_PUBLIC_SITE_URL": "https://jwlab.figur.workers.dev",
+    "R2_PUBLIC_BASE_URL": "https://jwlab.figur.workers.dev/api/assets",
+    "BCE_API_URL": "https://bcexp.id",
+    "NUXT_PUBLIC_BCE_TRACKING_URL": "https://bcexp.id/track"
+  },
   "assets": { "directory": ".output/public" },
   "observability": { "enabled": true },
   "d1_databases": [

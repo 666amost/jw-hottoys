@@ -9,6 +9,7 @@ export type PaymentStatusData = {
 };
 
 export const QRIS_MONITORING_WINDOW_MS = 30 * 60 * 1000;
+export const AWB_WAIT_WINDOW_MS = 5 * 60 * 1000;
 export const PAYMENT_STATUS_FAST_POLL_WINDOW_MS = 30 * 1000;
 export const PAYMENT_STATUS_FAST_POLL_INTERVAL_MS = 2 * 1000;
 export const PAYMENT_STATUS_RELAXED_POLL_WINDOW_MS = 2 * 60 * 1000;
@@ -31,4 +32,29 @@ export function getNextPaymentStatusPollDelay(now: number, deadline: number, sta
       ? PAYMENT_STATUS_RELAXED_POLL_INTERVAL_MS
       : PAYMENT_STATUS_FALLBACK_INTERVAL_MS;
   return Math.min(interval, remaining);
+}
+
+export type PaymentMonitoringDecision = {
+  shouldPoll: boolean;
+  deadline: number | null;
+  awbDeadline: number | null;
+};
+
+export function getPaymentMonitoringDecision(
+  now: number,
+  startedAt: number,
+  current: PaymentStatusData,
+  awbDeadline: number | null,
+): PaymentMonitoringDecision {
+  if (current.payment_status === "paid") {
+    if (current.awb_number) return { shouldPoll: false, deadline: null, awbDeadline };
+    const nextAwbDeadline = awbDeadline ?? now + AWB_WAIT_WINDOW_MS;
+    return { shouldPoll: true, deadline: nextAwbDeadline, awbDeadline: nextAwbDeadline };
+  }
+  if (current.payment_status !== "pending") return { shouldPoll: false, deadline: null, awbDeadline };
+  return {
+    shouldPoll: true,
+    deadline: getPaymentMonitoringDeadline(startedAt, current.expires_at),
+    awbDeadline,
+  };
 }

@@ -49,7 +49,10 @@ export default defineNuxtConfig({
     bcePartnerKey: "",
     bceWebhookSecret: "",
     r2PublicBaseUrl: "",
-    public: { siteUrl: "http://localhost:3000" },
+    public: {
+      siteUrl: "http://localhost:3000",
+      bceTrackingUrl: "https://bcexp.id/track",
+    },
   },
   app: {
     head: {
