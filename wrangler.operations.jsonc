@@ -7,7 +7,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   "vars": {
-    "BCE_API_URL": "https://bcexp.id"
+    "BCE_API_URL": "https://www.bcexp.id"
   },
   "d1_databases": [
     {

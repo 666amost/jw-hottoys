@@ -7,8 +7,8 @@
   "vars": {
     "NUXT_PUBLIC_SITE_URL": "https://jwlab.figur.workers.dev",
     "R2_PUBLIC_BASE_URL": "https://jwlab.figur.workers.dev/api/assets",
-    "BCE_API_URL": "https://bcexp.id",
-    "NUXT_PUBLIC_BCE_TRACKING_URL": "https://bcexp.id/track"
+    "BCE_API_URL": "https://www.bcexp.id",
+    "NUXT_PUBLIC_BCE_TRACKING_URL": "https://www.bcexp.id/track"
   },
   "assets": { "directory": ".output/public" },
   "observability": { "enabled": true },
