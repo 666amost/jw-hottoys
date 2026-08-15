@@ -41,6 +41,7 @@ const orders = computed(() => (data.value?.orders ?? []) as unknown as AdminOrde
 const selectedIds = ref<string[]>([]);
 const busyOrderId = ref<string | null>(null);
 const printing = ref(false);
+const printingOrderId = ref<string | null>(null);
 const actionError = ref<string | null>(null);
 
 const tabs = computed(() => [
@@ -148,21 +149,22 @@ async function retry(id: string) {
   }
 }
 
-async function createPrintJob() {
-  if (!selectedIds.value.length || printing.value) return;
+async function openPrintJob(orderIds: string[], directOrderId: string | null = null) {
+  if (!orderIds.length || printing.value) return;
   const printWindow = window.open("about:blank", "_blank");
   if (printWindow) {
     printWindow.document.title = "Menyiapkan label JWLAB";
     printWindow.document.body.innerHTML = "<p style='font:600 14px Arial;padding:24px'>Menyiapkan label pengiriman...</p>";
   }
   printing.value = true;
+  printingOrderId.value = directOrderId;
   actionError.value = null;
   try {
     const result = await $fetch<{ printUrl: string }>("/api/admin/label-print-jobs", {
       method: "POST",
-      body: { orderIds: selectedIds.value },
+      body: { orderIds },
     });
-    selectedIds.value = [];
+    selectedIds.value = selectedIds.value.filter(id => !orderIds.includes(id));
     await refresh();
     if (printWindow) printWindow.location.href = result.printUrl;
     else window.location.assign(result.printUrl);
@@ -172,7 +174,17 @@ async function createPrintJob() {
     await refresh();
   } finally {
     printing.value = false;
+    printingOrderId.value = null;
   }
+}
+
+async function createPrintJob() {
+  await openPrintJob([...selectedIds.value]);
+}
+
+async function reprintOrder(order: AdminOrder) {
+  if (!order.label_printed_at || !isPrintable(order)) return;
+  await openPrintJob([order.id], order.id);
 }
 
 watch(orders, () => {
@@ -275,6 +287,16 @@ useSeoMeta({ title: "Admin Pesanan" });
                 <AppButton v-if="mayRetry(order)" variant="secondary" class="self-end whitespace-nowrap" :disabled="busyOrderId === order.id" @click="retry(order.id)">
                   <ArrowClockwise :size="17" :class="busyOrderId === order.id ? 'animate-spin' : ''" />
                   {{ busyOrderId === order.id ? "Menjadwalkan..." : "Coba lagi buat resi" }}
+                </AppButton>
+                <AppButton
+                  v-if="bucket === 'processed' && order.label_printed_at && isPrintable(order)"
+                  variant="secondary"
+                  class="self-end whitespace-nowrap"
+                  :disabled="printing"
+                  @click="reprintOrder(order)"
+                >
+                  <Printer :size="17" weight="fill" />
+                  {{ printingOrderId === order.id ? "Menyiapkan..." : "Print AWB lagi" }}
                 </AppButton>
               </div>
             </div>

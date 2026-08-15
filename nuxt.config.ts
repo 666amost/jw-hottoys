@@ -66,6 +66,7 @@ export default defineNuxtConfig({
     },
   },
   routeRules: {
+    "/admin/awbprint": { ssr: false },
     "/admin/**": { ssr: true },
     "/account/**": { ssr: true },
     "/api/**": { cors: false },
