@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   PhArrowRight as ArrowRight,
-  PhCurrencyCircleDollar as CurrencyCircleDollar,
   PhMegaphone as Megaphone,
   PhPackage as Package,
   PhPlus as Plus,
@@ -23,6 +22,7 @@ type DashboardOrder = {
   awb_number: string | null;
   total_amount: number;
   created_at: string;
+  label_printed_at: string | null;
 };
 
 const { data } = await useFetch("/api/admin/overview");
@@ -38,6 +38,7 @@ const stats = computed(() => [
     value: String(data.value?.metrics.orders ?? 0),
     helper: "Semua pesanan masuk",
     icon: ShoppingBagOpen,
+    iconText: null,
     color: "bg-blue-50 text-[#0b4697]",
   },
   {
@@ -45,13 +46,15 @@ const stats = computed(() => [
     value: String(data.value?.metrics.products ?? 0),
     helper: "Produk dalam katalog",
     icon: Package,
+    iconText: null,
     color: "bg-violet-50 text-violet-700",
   },
   {
     label: "Pendapatan terbayar",
     value: formatCurrency(data.value?.metrics.revenue ?? 0),
     helper: "Pembayaran terkonfirmasi",
-    icon: CurrencyCircleDollar,
+    icon: null,
+    iconText: "Rp",
     color: "bg-emerald-50 text-emerald-700",
   },
   {
@@ -59,6 +62,7 @@ const stats = computed(() => [
     value: String(data.value?.metrics.lowStock ?? 0),
     helper: "Varian dengan stok ≤ 5",
     icon: Warning,
+    iconText: null,
     color: "bg-amber-50 text-amber-700",
   },
 ]);
@@ -110,10 +114,37 @@ useSeoMeta({ title: "Admin Dashboard" });
       </p>
     </div>
 
+    <section class="mt-6 grid gap-3 lg:grid-cols-2" aria-label="Antrean pemrosesan pesanan">
+      <NuxtLink
+        to="/admin/orders?bucket=needs_processing"
+        class="group surface flex min-w-0 items-center gap-3 border-l-4 border-l-amber-500 p-4 transition hover:-translate-y-0.5 hover:shadow-lg sm:px-5"
+      >
+        <span class="min-w-0 flex-1">
+          <span class="block text-xs font-extrabold uppercase tracking-[.1em] text-amber-700">Pesanan perlu diproses</span>
+          <span class="mt-1 block text-xs text-slate-500">Sudah dibayar dan memiliki AWB, label belum dicetak.</span>
+        </span>
+        <strong class="shrink-0 text-3xl font-black tracking-tight text-slate-950">{{ data?.metrics.needsProcessing ?? 0 }}</strong>
+        <ArrowRight :size="21" class="shrink-0 text-slate-300 transition group-hover:translate-x-1 group-hover:text-amber-600" />
+      </NuxtLink>
+
+      <NuxtLink
+        to="/admin/orders?bucket=processed"
+        class="group surface flex min-w-0 items-center gap-3 border-l-4 border-l-emerald-500 p-4 transition hover:-translate-y-0.5 hover:shadow-lg sm:px-5"
+      >
+        <span class="min-w-0 flex-1">
+          <span class="block text-xs font-extrabold uppercase tracking-[.1em] text-emerald-700">Pesanan sudah diproses</span>
+          <span class="mt-1 block text-xs text-slate-500">Label sudah dicetak dan pengiriman belum selesai.</span>
+        </span>
+        <strong class="shrink-0 text-3xl font-black tracking-tight text-slate-950">{{ data?.metrics.processed ?? 0 }}</strong>
+        <ArrowRight :size="21" class="shrink-0 text-slate-300 transition group-hover:translate-x-1 group-hover:text-emerald-600" />
+      </NuxtLink>
+    </section>
+
     <section class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Statistik toko">
       <article v-for="stat in stats" :key="stat.label" class="surface flex min-w-0 items-start gap-4 p-5">
         <span class="grid size-11 shrink-0 place-items-center rounded-xl" :class="stat.color">
-          <component :is="stat.icon" :size="23" weight="fill" />
+          <component :is="stat.icon" v-if="stat.icon" :size="23" weight="fill" />
+          <span v-else class="text-sm font-black tracking-tight">{{ stat.iconText }}</span>
         </span>
         <div class="min-w-0">
           <p class="text-[11px] font-extrabold uppercase tracking-[.08em] text-slate-400">{{ stat.label }}</p>

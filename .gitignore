@@ -48,3 +48,4 @@ README.md
 nextonuxtvue.md
 scripts/create-admin.mjs
 tests/production-auth-config.test.ts
+database/migrations/0004_fulfillment_label_printing.sql

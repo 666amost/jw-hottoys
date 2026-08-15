@@ -7,6 +7,7 @@ const root = resolve(import.meta.dirname, "..");
 const schema = readFileSync(resolve(root, "database/migrations/0001_initial.sql"), "utf8");
 const removeDemoCatalog = readFileSync(resolve(root, "database/migrations/0002_remove_demo_catalog.sql"), "utf8");
 const fixBetterAuthDates = readFileSync(resolve(root, "database/migrations/0003_fix_better_auth_dates.sql"), "utf8");
+const fulfillmentLabelPrinting = readFileSync(resolve(root, "database/migrations/0004_fulfillment_label_printing.sql"), "utf8");
 const seed = readFileSync(resolve(root, "database/seed.sql"), "utf8");
 let db: DatabaseSync;
 
@@ -47,6 +48,7 @@ beforeEach(() => {
     db.exec("ROLLBACK");
     throw error;
   }
+  db.exec(fulfillmentLabelPrinting);
 });
 afterEach(() => db.close());
 
@@ -83,6 +85,22 @@ describe("D1 transactional invariants", () => {
     db.prepare("INSERT OR IGNORE INTO outbox_jobs(id,kind,dedupe_key,payload,status,available_at,created_at,updated_at) VALUES('job-2','shipment_creation','order-1','{}','pending','now','now','now')").run();
     expect(db.prepare("SELECT COUNT(*) count FROM payment_events").get()).toMatchObject({ count: 1 });
     expect(db.prepare("SELECT COUNT(*) count FROM outbox_jobs").get()).toMatchObject({ count: 1 });
+  });
+
+  it("stores first-print state while allowing audited reprint jobs", () => {
+    order("print-order");
+    db.prepare("UPDATE orders SET status='paid',payment_status='paid' WHERE id='print-order'").run();
+    db.prepare(`INSERT INTO shipments(id,order_id,provider,awb_number,status,created_at,updated_at)
+      VALUES('shipment-print','print-order','BCE','BCEPRINT001','awb_created','now','now')`).run();
+    db.prepare("INSERT INTO shipment_label_print_jobs(id,created_by,created_at) VALUES('print-job-1','user-1','now')").run();
+    db.prepare("INSERT INTO shipment_label_print_job_items(job_id,shipment_id,sort_order) VALUES('print-job-1','shipment-print',0)").run();
+    db.prepare("UPDATE shipments SET label_printed_at='2026-08-15T00:00:00.000Z' WHERE id='shipment-print' AND label_printed_at IS NULL").run();
+    db.prepare("INSERT INTO shipment_label_print_jobs(id,created_by,created_at) VALUES('print-job-2','user-1','later')").run();
+    db.prepare("INSERT INTO shipment_label_print_job_items(job_id,shipment_id,sort_order) VALUES('print-job-2','shipment-print',0)").run();
+
+    expect(db.prepare("SELECT label_printed_at FROM shipments WHERE id='shipment-print'").get()).toMatchObject({ label_printed_at: "2026-08-15T00:00:00.000Z" });
+    expect(db.prepare("SELECT COUNT(*) count FROM shipment_label_print_job_items WHERE shipment_id='shipment-print'").get()).toMatchObject({ count: 2 });
+    expect(db.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
   });
 
   it("enforces voucher capacity across active orders", () => {
