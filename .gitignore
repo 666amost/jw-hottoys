@@ -49,3 +49,5 @@ nextonuxtvue.md
 scripts/create-admin.mjs
 tests/production-auth-config.test.ts
 database/migrations/0004_fulfillment_label_printing.sql
+database/migrations/0005_multi_carrier_shipping.sql
+database/migrations/0006_region_geocode_cache.sql

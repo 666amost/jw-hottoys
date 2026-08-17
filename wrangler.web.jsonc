@@ -8,6 +8,8 @@
     "NUXT_PUBLIC_SITE_URL": "https://jwlab.figur.workers.dev",
     "R2_PUBLIC_BASE_URL": "https://jwlab.figur.workers.dev/api/assets",
     "BCE_API_URL": "https://www.bcexp.id",
+    "RAJAONGKIR_API_URL": "https://rajaongkir.komerce.id/api/v1",
+    "GEOCODER_API_URL": "https://nominatim.openstreetmap.org",
     "NUXT_PUBLIC_BCE_TRACKING_URL": "https://www.bcexp.id/track"
   },
   "assets": { "directory": ".output/public" },

@@ -187,7 +187,7 @@ useSeoMeta({
         <div class="home-trust-item"><MapPin :size="21" weight="fill" /><span><b>Made in Indonesia</b><small>Dibuat oleh studio lokal</small></span></div>
         <div class="home-trust-item"><Cube :size="21" weight="fill" /><span><b>Premium material</b><small>PLA kini, resin berikutnya</small></span></div>
         <div class="home-trust-item"><ShieldCheck :size="21" weight="fill" /><span><b>Secure checkout</b><small>Pembayaran terverifikasi</small></span></div>
-        <div class="home-trust-item"><Truck :size="21" weight="fill" /><span><b>Tracked delivery</b><small>Dikirim dengan BCE Express</small></span></div>
+        <div class="home-trust-item"><Truck :size="21" weight="fill" /><span><b>Tracked delivery</b><small>BCE Express & JNE seluruh Indonesia</small></span></div>
       </div>
     </section>
 

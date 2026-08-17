@@ -18,6 +18,10 @@ declare global {
     BCE_API_URL?: string;
     BCE_PARTNER_KEY?: string;
     BCE_WEBHOOK_SECRET?: string;
+    RAJAONGKIR_API_URL?: string;
+    RAJAONGKIR_API_KEY?: string;
+    RAJAONGKIR_ORIGIN_ID?: string;
+    GEOCODER_API_URL?: string;
     R2_PUBLIC_BASE_URL?: string;
   }
 }

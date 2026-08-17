@@ -12,6 +12,7 @@ type PrintableOrderRow = {
   awb_number: string | null;
   shipment_status: string;
   label_printed_at: string | null;
+  provider: string;
 };
 
 export default defineEventHandler(async (event) => {
@@ -24,13 +25,14 @@ export default defineEventHandler(async (event) => {
   const placeholders = orderIds.map(() => "?").join(",");
   const db = bindings(event).DB;
   const { results } = await db.prepare(`SELECT o.id,o.status,o.payment_status,
-    s.id shipment_id,s.awb_number,s.status shipment_status,s.label_printed_at
+    s.id shipment_id,s.awb_number,s.status shipment_status,s.label_printed_at,s.provider
     FROM orders o JOIN shipments s ON s.order_id=o.id
     WHERE o.id IN (${placeholders})`).bind(...orderIds).all<PrintableOrderRow>();
   const byOrderId = new Map(results.map(row => [row.id, row]));
   const orderedRows = orderIds.map(id => byOrderId.get(id));
   const hasStaleSelection = orderedRows.some(row => !row
     || row.payment_status !== "paid"
+    || row.provider !== "BCE"
     || !row.awb_number
     || row.status === "fulfilled"
     || row.status === "cancelled"

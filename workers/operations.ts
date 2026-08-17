@@ -37,7 +37,7 @@ async function processShipment(env: OperationsEnv, body: QueueBody) {
   const order = await env.DB.prepare(`SELECT o.id,o.order_number,o.recipient_name,o.recipient_phone,o.shipping_address,o.shipping_charged_amount,
     q.billable_weight_kg,q.total_weight_grams,s.id shipment_id,s.awb_number
     FROM orders o JOIN shipping_quotes q ON q.order_id=o.id LEFT JOIN shipments s ON s.order_id=o.id
-    WHERE o.id=? AND o.payment_status='paid'`).bind(body.orderId).first<{
+    WHERE o.id=? AND o.payment_status='paid' AND q.provider='BCE' AND (s.provider IS NULL OR s.provider='BCE')`).bind(body.orderId).first<{
       id: string; order_number: string; recipient_name: string; recipient_phone: string; shipping_address: string;
       shipping_charged_amount: number; billable_weight_kg: number; total_weight_grams: number; shipment_id: string | null; awb_number: string | null;
     }>();
@@ -87,7 +87,7 @@ async function processShipment(env: OperationsEnv, body: QueueBody) {
 
 async function processTracking(env: OperationsEnv, body: QueueBody) {
   if (!body.shipmentId) throw new Error("Queue tracking tidak memiliki shipmentId.");
-  const shipment = await env.DB.prepare("SELECT id,awb_number,status FROM shipments WHERE id=?").bind(body.shipmentId).first<{ id: string; awb_number: string | null; status: string }>();
+  const shipment = await env.DB.prepare("SELECT id,awb_number,status FROM shipments WHERE id=? AND provider='BCE'").bind(body.shipmentId).first<{ id: string; awb_number: string | null; status: string }>();
   if (!shipment?.awb_number) throw new Error("AWB belum tersedia.");
   const response = await bceFetch(env, `/api/v1/partner/shipments/${encodeURIComponent(shipment.awb_number)}/tracking`, { method: "GET" });
   if (!response.ok) throw new BceHttpError("tracking", response.status);
@@ -157,7 +157,7 @@ async function expireOrders(env: OperationsEnv) {
 }
 
 async function scheduleTracking(env: OperationsEnv) {
-  const { results } = await env.DB.prepare("SELECT id FROM shipments WHERE status NOT IN ('delivered','exception') AND awb_number IS NOT NULL AND error_message IS NULL AND (next_tracking_at IS NULL OR unixepoch(next_tracking_at)<=unixepoch('now')) LIMIT 50").all<{ id: string }>();
+  const { results } = await env.DB.prepare("SELECT id FROM shipments WHERE provider='BCE' AND status NOT IN ('delivered','exception') AND awb_number IS NOT NULL AND error_message IS NULL AND (next_tracking_at IS NULL OR unixepoch(next_tracking_at)<=unixepoch('now')) LIMIT 50").all<{ id: string }>();
   const now = new Date().toISOString();
   for (const shipment of results) {
     const bucket = Math.floor(Date.now() / 120_000);

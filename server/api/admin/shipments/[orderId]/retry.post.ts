@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
   await requireAdmin(event);
   const env = bindings(event);
   const orderId = getRouterParam(event, "orderId");
-  const shipment = await env.DB.prepare("SELECT id,awb_number FROM shipments WHERE order_id=?")
+  const shipment = await env.DB.prepare("SELECT id,awb_number FROM shipments WHERE order_id=? AND provider='BCE'")
     .bind(orderId)
     .first<{ id: string; awb_number: string | null }>();
   if (!shipment) apiError(404, "SHIPMENT_NOT_FOUND", "Shipment tidak ditemukan.");

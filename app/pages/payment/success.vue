@@ -25,11 +25,12 @@ let cartCleared = false;
 
 const terminal = computed(() => status.value && status.value.payment_status !== "pending");
 const trackingUrl = computed(() => status.value?.awb_number
-  ? buildBceTrackingUrl(String(config.public.bceTrackingUrl || ""), status.value.awb_number)
+  ? status.value.shipping_provider === "JNE" ? "https://www.jne.co.id/tracking-package" : buildBceTrackingUrl(String(config.public.bceTrackingUrl || ""), status.value.awb_number)
   : null);
 const statusMessage = computed(() => {
   if (status.value?.payment_status === "paid") {
-    if (status.value.awb_number) return `Pembayaran berhasil. Resi BCE: ${status.value.awb_number}`;
+    if (status.value.awb_number) return `Pembayaran berhasil. Resi ${status.value.shipping_provider || "pengiriman"}: ${status.value.awb_number}`;
+    if (status.value.shipping_provider === "JNE") return "Pembayaran berhasil. Admin akan menambahkan resi JNE setelah paket diproses.";
     if (ended.value) return "Pembayaran berhasil. Resi masih diproses dan akan tersedia di detail pesanan.";
     return "Pembayaran berhasil, resi sedang dibuat.";
   }
@@ -95,7 +96,7 @@ useSeoMeta({ title: "Status Pembayaran" });
         rel="noopener noreferrer"
         class="mt-5 block text-sm font-black text-[#0b4697] underline"
       >
-        Lacak di BCE Express
+        Lacak di {{ status?.shipping_provider === "JNE" ? "JNE" : "BCE Express" }}
       </a>
       <NuxtLink
         :to="status?.id ? `/account/orders/${status.id}` : '/account/orders'"

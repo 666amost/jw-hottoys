@@ -13,7 +13,7 @@ import {
   PhWarningCircle as WarningCircle,
 } from "@phosphor-icons/vue";
 import { formatCurrency } from "~~/shared/format";
-import { calculateCartShipping } from "~~/shared/shipping";
+import type { ShippingOption, ShippingProvider } from "~~/shared/shipping-options";
 
 type AddressRow = {
   id: string;
@@ -38,8 +38,14 @@ const { data } = await useFetch<{ addresses: AddressRow[] }>("/api/account/addre
 const addressId = ref("");
 const voucherCode = ref("");
 const loading = ref(false);
+const quoteLoading = ref(false);
 const error = ref("");
-const shipping = computed(() => lines.value.length ? calculateCartShipping(lines.value) : null);
+const quoteId = ref("");
+const quoteProvider = ref<ShippingProvider | null>(null);
+const shippingOptions = ref<ShippingOption[]>([]);
+const shippingServiceCode = ref("");
+let quoteRequest = 0;
+const shipping = computed(() => shippingOptions.value.find(option => option.serviceCode === shippingServiceCode.value) ?? null);
 const total = computed(() => subtotal.value + (shipping.value?.chargedAmount || 0));
 
 watchEffect(() => {
@@ -48,8 +54,36 @@ watchEffect(() => {
   }
 });
 
+async function loadShippingQuote() {
+  const request = ++quoteRequest;
+  quoteId.value = "";
+  quoteProvider.value = null;
+  shippingOptions.value = [];
+  shippingServiceCode.value = "";
+  if (!addressId.value || !lines.value.length) return;
+  quoteLoading.value = true;
+  error.value = "";
+  try {
+    const result = await $fetch<{ quoteId: string; provider: ShippingProvider; options: ShippingOption[] }>("/api/shipping/quotes", {
+      method: "POST",
+      body: { addressId: addressId.value, lines: lines.value.map(line => ({ variantId: line.variantId, quantity: line.quantity })) },
+    });
+    if (request !== quoteRequest) return;
+    quoteId.value = result.quoteId;
+    quoteProvider.value = result.provider;
+    shippingOptions.value = result.options;
+    shippingServiceCode.value = result.options[0]?.serviceCode || "";
+  } catch (cause: any) {
+    if (request === quoteRequest) error.value = cause?.data?.data?.error?.message || cause?.data?.statusMessage || "Tarif pengiriman belum dapat dimuat.";
+  } finally {
+    if (request === quoteRequest) quoteLoading.value = false;
+  }
+}
+
+watch([addressId, () => lines.value.map(line => `${line.variantId}:${line.quantity}`).join("|")], () => void loadShippingQuote(), { immediate: true });
+
 async function checkout() {
-  if (loading.value || !lines.value.length || !addressId.value) return;
+  if (loading.value || !lines.value.length || !addressId.value || !quoteId.value || !shippingServiceCode.value) return;
   loading.value = true;
   error.value = "";
   try {
@@ -58,6 +92,8 @@ async function checkout() {
       body: {
         addressId: addressId.value,
         voucherCode: voucherCode.value.trim() || null,
+        shippingQuoteId: quoteId.value,
+        shippingServiceCode: shippingServiceCode.value,
         lines: lines.value.map((line) => ({ variantId: line.variantId, quantity: line.quantity })),
       },
     });
@@ -144,15 +180,33 @@ useSeoMeta({
             <div v-else class="p-6 text-center sm:p-10">
               <span class="mx-auto grid size-14 place-items-center rounded-2xl bg-amber-50 text-amber-700"><MapPin :size="27" weight="duotone" /></span>
               <h3 class="mt-4 font-black">Alamat pengiriman diperlukan</h3>
-              <p class="mt-2 text-sm text-slate-500">Tambahkan alamat Jakarta atau Tangerang untuk menghitung dan memproses pengiriman.</p>
+              <p class="mt-2 text-sm text-slate-500">Tambahkan alamat Indonesia untuk menghitung metode dan tarif pengiriman.</p>
               <NuxtLink to="/account/addresses/new?next=/checkout" class="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#0b4697] px-5 text-sm font-black text-white"><Plus :size="16" /> Tambah alamat</NuxtLink>
+            </div>
+          </section>
+
+          <section class="surface overflow-hidden" aria-labelledby="shipping-method-title">
+            <header class="flex items-center gap-3 border-b border-slate-100 px-5 py-5 sm:px-6">
+              <span class="grid size-10 place-items-center rounded-xl bg-blue-50 text-[#0b4697]"><Truck :size="21" weight="fill" /></span>
+              <div><p class="text-[9px] font-black uppercase tracking-[.14em] text-[#0b4697]">Langkah 2</p><h2 id="shipping-method-title" class="mt-0.5 text-lg font-black">Metode pengiriman</h2></div>
+            </header>
+            <div class="p-5 sm:p-6">
+              <div v-if="quoteLoading" class="rounded-xl bg-slate-50 p-4 text-sm font-bold text-slate-500">Menghitung tarif untuk alamat terpilih...</div>
+              <div v-else-if="shippingOptions.length" class="grid gap-3">
+                <label v-for="option in shippingOptions" :key="option.serviceCode" class="flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition" :class="shippingServiceCode === option.serviceCode ? 'border-[#0b4697] bg-blue-50/60 ring-2 ring-blue-100' : 'border-slate-200 hover:border-slate-300'">
+                  <input v-model="shippingServiceCode" type="radio" :value="option.serviceCode" class="mt-1 size-4 accent-[#0b4697]">
+                  <span class="min-w-0 flex-1"><b class="block text-sm text-slate-900">{{ option.serviceName }}</b><small v-if="option.description" class="mt-1 block text-xs leading-5 text-slate-500">{{ option.description }}</small><small v-if="option.etd" class="mt-1 block text-xs font-bold text-[#0b4697]">Estimasi {{ option.etd }}</small></span>
+                  <b class="shrink-0 text-sm">{{ formatCurrency(option.chargedAmount) }}</b>
+                </label>
+              </div>
+              <p v-else class="text-sm text-slate-500">Pilih alamat untuk memuat metode pengiriman.</p>
             </div>
           </section>
 
           <section class="surface overflow-hidden" aria-labelledby="voucher-title">
             <header class="flex items-center gap-3 border-b border-slate-100 px-5 py-5 sm:px-6">
               <span class="grid size-10 place-items-center rounded-xl bg-red-50 text-[#ec0016]"><Ticket :size="21" weight="fill" /></span>
-              <div><p class="text-[9px] font-black uppercase tracking-[.14em] text-[#ec0016]">Langkah 2</p><h2 id="voucher-title" class="mt-0.5 text-lg font-black">Voucher</h2></div>
+              <div><p class="text-[9px] font-black uppercase tracking-[.14em] text-[#ec0016]">Langkah 3</p><h2 id="voucher-title" class="mt-0.5 text-lg font-black">Voucher</h2></div>
             </header>
             <div class="p-5 sm:p-6">
               <label class="field-label">
@@ -177,7 +231,7 @@ useSeoMeta({
 
         <aside class="surface overflow-hidden md:sticky md:top-40">
           <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
-            <p class="text-[9px] font-black uppercase tracking-[.14em] text-[#0b4697]">Langkah 3</p>
+            <p class="text-[9px] font-black uppercase tracking-[.14em] text-[#0b4697]">Langkah 4</p>
             <h2 class="mt-1 text-xl font-black">Konfirmasi pesanan</h2>
           </div>
 
@@ -192,7 +246,7 @@ useSeoMeta({
           <div class="border-t border-slate-100 p-5 sm:p-6">
             <dl class="grid gap-3 text-sm">
               <div class="flex justify-between gap-4"><dt class="text-slate-500">Subtotal ({{ count }} item)</dt><dd class="font-bold">{{ formatCurrency(subtotal) }}</dd></div>
-              <div class="flex justify-between gap-4"><dt class="text-slate-500">Pengiriman BCE</dt><dd class="font-bold">{{ formatCurrency(shipping?.chargedAmount || 0) }}</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-slate-500">{{ shipping?.serviceName || "Pengiriman" }}</dt><dd class="font-bold">{{ quoteLoading ? "Menghitung..." : formatCurrency(shipping?.chargedAmount || 0) }}</dd></div>
               <div v-if="shipping?.discountAmount" class="flex justify-between gap-4 text-emerald-700"><dt>Diskon pengiriman</dt><dd class="font-black">-{{ formatCurrency(shipping.discountAmount) }}</dd></div>
               <div v-if="voucherCode" class="flex justify-between gap-4 text-slate-500"><dt>Voucher {{ voucherCode.toUpperCase() }}</dt><dd class="text-xs font-bold">Diverifikasi berikutnya</dd></div>
             </dl>
@@ -200,14 +254,14 @@ useSeoMeta({
             <div class="flex items-end justify-between gap-4"><span class="font-black">Total sementara</span><strong class="text-2xl font-black tracking-tight text-[#0b4697]">{{ formatCurrency(total) }}</strong></div>
             <p class="mt-2 text-[10px] leading-5 text-slate-400">Total dapat berkurang setelah voucher berhasil diverifikasi.</p>
 
-            <AppButton class="mt-6 w-full" :disabled="loading || !addressId" @click="checkout">
+            <AppButton class="mt-6 w-full" :disabled="loading || quoteLoading || !addressId || !quoteId || !shippingServiceCode" @click="checkout">
               <QrCode :size="19" weight="bold" /> {{ loading ? "Menyiapkan pembayaran..." : "Buat pembayaran QRIS" }}
             </AppButton>
-            <p v-if="!addressId" class="mt-3 text-center text-[11px] font-bold text-amber-700">Pilih atau tambahkan alamat terlebih dahulu.</p>
+            <p v-if="!addressId || (!quoteLoading && !quoteId)" class="mt-3 text-center text-[11px] font-bold text-amber-700">Pilih alamat dan metode pengiriman terlebih dahulu.</p>
 
             <div class="mt-5 grid gap-2.5 border-t border-slate-100 pt-5 text-[10px] font-semibold text-slate-500">
               <p class="flex items-center gap-2"><ShieldCheck :size="16" weight="fill" class="text-emerald-600" /> Pembayaran QRIS aman dan terverifikasi</p>
-              <p class="flex items-center gap-2"><Truck :size="16" weight="fill" class="text-[#0b4697]" /> Resi BCE tersedia setelah pembayaran</p>
+              <p class="flex items-center gap-2"><Truck :size="16" weight="fill" class="text-[#0b4697]" /> {{ quoteProvider === "JNE" ? "Resi JNE ditambahkan admin setelah paket diproses" : "Resi BCE tersedia setelah pembayaran" }}</p>
               <p class="flex items-center gap-2"><CheckCircle :size="16" weight="fill" class="text-[#0b4697]" /> Stok diamankan selama 30 menit</p>
             </div>
           </div>

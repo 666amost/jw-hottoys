@@ -22,6 +22,8 @@ type AdminOrder = {
   shipment_error: string | null;
   awb_number: string | null;
   label_printed_at: string | null;
+  shipping_provider: "BCE" | "JNE" | null;
+  shipping_service: string | null;
   total_amount: number;
   created_at: string;
 };
@@ -43,6 +45,7 @@ const busyOrderId = ref<string | null>(null);
 const printing = ref(false);
 const printingOrderId = ref<string | null>(null);
 const actionError = ref<string | null>(null);
+const awbDraft = reactive<Record<string, string>>({});
 
 const tabs = computed(() => [
   { key: "needs_processing" as const, label: "Perlu diproses", count: data.value?.counts.needsProcessing ?? 0 },
@@ -77,6 +80,7 @@ function displayStatus(order: AdminOrder) {
 }
 
 function isPrintable(order: AdminOrder) {
+  if (order.shipping_provider !== "BCE") return false;
   return getFulfillmentBucket({
     paymentStatus: order.payment_status,
     orderStatus: order.status,
@@ -87,7 +91,20 @@ function isPrintable(order: AdminOrder) {
 }
 
 function mayRetry(order: AdminOrder) {
-  return canRetryBceShipment({ paymentStatus: order.payment_status, awbNumber: order.awb_number, shipmentError: order.shipment_error });
+  return order.shipping_provider === "BCE" && canRetryBceShipment({ paymentStatus: order.payment_status, awbNumber: order.awb_number, shipmentError: order.shipment_error });
+}
+
+async function saveJneAwb(order: AdminOrder) {
+  const awbNumber = (awbDraft[order.id] || order.awb_number || "").trim();
+  if (!awbNumber) return;
+  busyOrderId.value = order.id;
+  actionError.value = null;
+  try {
+    await $fetch(`/api/admin/shipments/${order.id}/awb`, { method: "POST", body: { awbNumber } });
+    awbDraft[order.id] = "";
+    await refresh();
+  } catch (error) { actionError.value = errorText(error); }
+  finally { busyOrderId.value = null; }
 }
 
 function errorText(error: unknown) {
@@ -197,7 +214,7 @@ useSeoMeta({ title: "Admin Pesanan" });
 
 <template>
   <div class="pb-24">
-    <AdminPageHeader title="Pesanan" description="Proses order ber-AWB, cetak label, dan pantau perjalanan BCE Express." />
+    <AdminPageHeader title="Pesanan" description="Proses pengiriman BCE Express dan input resi JNE manual." />
 
     <nav class="mb-5 flex gap-2 overflow-x-auto pb-1" aria-label="Filter pemrosesan pesanan">
       <button
@@ -263,10 +280,10 @@ useSeoMeta({ title: "Admin Pesanan" });
                 <div class="mt-4 flex min-w-0 items-start gap-3 rounded-xl bg-slate-50 p-3.5">
                   <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-white text-[#0b4697] shadow-sm"><Package :size="18" weight="fill" /></span>
                   <div class="min-w-0">
-                    <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Pengiriman BCE</p>
+                    <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Pengiriman {{ order.shipping_service || order.shipping_provider || "–" }}</p>
                     <p class="mt-1 text-xs font-bold text-slate-700">{{ shipmentStatusLabel(order.shipment_status) }}</p>
                     <p v-if="order.awb_number" class="mt-1 break-all font-mono text-[11px] text-slate-500">AWB {{ order.awb_number }}</p>
-                    <p v-else-if="order.payment_status === 'paid' && !order.shipment_error" class="mt-1 text-[11px] text-slate-500">Resi sedang dibuat otomatis.</p>
+                    <p v-else-if="order.payment_status === 'paid' && !order.shipment_error" class="mt-1 text-[11px] text-slate-500">{{ order.shipping_provider === "JNE" ? "Masukkan resi setelah shipment dibuat di JNE." : "Resi sedang dibuat otomatis." }}</p>
                     <p v-else-if="order.payment_status !== 'paid'" class="mt-1 text-[11px] text-slate-500">Pengiriman dibuat setelah pembayaran terverifikasi.</p>
                     <p v-if="order.shipment_error" class="mt-2 text-[11px] font-semibold text-red-600">{{ order.shipment_error }}</p>
                   </div>
@@ -274,6 +291,10 @@ useSeoMeta({ title: "Admin Pesanan" });
               </div>
 
               <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-1">
+                <div v-if="order.shipping_provider === 'JNE' && order.payment_status === 'paid'" class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                  <label class="min-w-0"><span class="mb-1.5 block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Resi JNE</span><input v-model="awbDraft[order.id]" class="field w-full font-mono" :placeholder="order.awb_number || 'Masukkan AWB JNE'" maxlength="60"></label>
+                  <AppButton class="self-end" :disabled="busyOrderId === order.id || !(awbDraft[order.id] || order.awb_number)" @click="saveJneAwb(order)">{{ order.awb_number ? "Perbarui" : "Simpan" }}</AppButton>
+                </div>
                 <label class="min-w-0">
                   <span class="mb-1.5 block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Status pesanan</span>
                   <select class="field w-full" :value="order.status" :disabled="busyOrderId === order.id" @change="setStatus(order.id, ($event.target as HTMLSelectElement).value)">

@@ -11,11 +11,8 @@ import {
   PhTruck as Truck,
 } from "@phosphor-icons/vue";
 import { formatCurrency } from "~~/shared/format";
-import { calculateCartShipping } from "~~/shared/shipping";
 
 const { lines, count, subtotal, update } = useCart();
-const shipping = computed(() => lines.value.length ? calculateCartShipping(lines.value) : null);
-const estimatedTotal = computed(() => subtotal.value + (shipping.value?.chargedAmount || 0));
 
 function changeQuantity(variantId: string, current: number, delta: number) {
   update(variantId, current + delta);
@@ -112,12 +109,11 @@ useSeoMeta({
           <div class="p-5 sm:p-6">
             <dl class="grid gap-4 text-sm">
               <div class="flex justify-between gap-5"><dt class="text-slate-500">Subtotal ({{ count }} item)</dt><dd class="font-bold">{{ formatCurrency(subtotal) }}</dd></div>
-              <div class="flex justify-between gap-5"><dt class="text-slate-500">Estimasi ongkir</dt><dd class="font-bold">{{ shipping ? formatCurrency(shipping.chargedAmount) : "–" }}</dd></div>
-              <div v-if="shipping?.discountAmount" class="flex justify-between gap-5 text-emerald-700"><dt>Hemat ongkir</dt><dd class="font-black">-{{ formatCurrency(shipping.discountAmount) }}</dd></div>
+              <div class="flex justify-between gap-5"><dt class="text-slate-500">Ongkir</dt><dd class="text-right text-xs font-bold text-slate-500">Dihitung dari alamat</dd></div>
             </dl>
             <div class="my-5 border-t border-dashed border-slate-200" />
-            <div class="flex items-end justify-between gap-4"><span class="font-black">Estimasi total</span><strong class="text-2xl font-black tracking-tight text-[#0b4697]">{{ formatCurrency(estimatedTotal) }}</strong></div>
-            <p class="mt-2 flex items-start gap-2 text-[11px] leading-5 text-slate-500"><Truck :size="16" class="mt-0.5 shrink-0 text-[#0b4697]" /> Pengiriman khusus Jakarta dan Tangerang melalui BCE Express.</p>
+            <div class="flex items-end justify-between gap-4"><span class="font-black">Subtotal</span><strong class="text-2xl font-black tracking-tight text-[#0b4697]">{{ formatCurrency(subtotal) }}</strong></div>
+            <p class="mt-2 flex items-start gap-2 text-[11px] leading-5 text-slate-500"><Truck :size="16" class="mt-0.5 shrink-0 text-[#0b4697]" /> BCE Express untuk area layanan lokal, JNE untuk wilayah Indonesia lainnya.</p>
             <NuxtLink to="/checkout" class="mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#0b4697] px-5 text-sm font-black text-white shadow-[0_12px_30px_rgba(11,70,151,.22)] transition hover:-translate-y-0.5 hover:bg-[#073979]">Pilih pengiriman <ArrowRight :size="17" weight="bold" /></NuxtLink>
             <div class="mt-4 flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400"><ShieldCheck :size="15" weight="fill" class="text-emerald-600" /> Pembayaran aman & terverifikasi</div>
           </div>

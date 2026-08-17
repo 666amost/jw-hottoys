@@ -10,6 +10,8 @@ type AccountOrder = {
   status: string;
   payment_status: string;
   shipment_status: string | null;
+  shipping_provider: "BCE" | "JNE" | null;
+  shipping_service: string | null;
   total_amount: number;
   item_count: number;
   created_at: string;
@@ -55,6 +57,7 @@ useSeoMeta({ title: "Pesanan Saya" });
         <div class="min-w-0">
           <b class="break-words">{{ order.order_number }}</b>
           <p class="mt-1 text-xs text-slate-500">{{ formatDate(order.created_at) }} · {{ order.item_count }} item</p>
+          <p v-if="order.shipping_provider" class="mt-1 text-xs font-bold text-[#0b4697]">{{ order.shipping_service || order.shipping_provider }}</p>
           <div class="mt-3 flex flex-wrap items-center gap-2">
             <span class="rounded-full px-2.5 py-1 text-[10px] font-extrabold" :class="statusStyles[displayStatus(order).key]">
               {{ displayStatus(order).label }}

@@ -11,8 +11,8 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "CHECKOUT_REJECTED";
     const friendly = message.includes("STOCK") ? "Stok salah satu produk baru saja habis."
-      : message.includes("DESTINATION") ? "Pengiriman hanya tersedia untuk Jakarta dan Tangerang."
-        : message.includes("ADDRESS") ? "Alamat tidak ditemukan."
+      : message.includes("SHIPPING_QUOTE") || message.includes("SHIPPING_SERVICE") ? "Pilihan ongkir sudah tidak berlaku. Muat ulang tarif pengiriman."
+      : message.includes("ADDRESS") ? "Alamat tidak ditemukan."
           : message.includes("VOUCHER") ? "Voucher tidak valid atau kuotanya habis."
             : "Checkout tidak dapat diproses. Periksa kembali keranjang dan alamat.";
     apiError(409, "CHECKOUT_REJECTED", friendly);

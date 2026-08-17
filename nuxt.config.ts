@@ -48,6 +48,10 @@ export default defineNuxtConfig({
     bceApiUrl: "",
     bcePartnerKey: "",
     bceWebhookSecret: "",
+    rajaOngkirApiUrl: "https://rajaongkir.komerce.id/api/v1",
+    rajaOngkirApiKey: "",
+    rajaOngkirOriginId: "",
+    geocoderApiUrl: "https://nominatim.openstreetmap.org",
     r2PublicBaseUrl: "",
     public: {
       siteUrl: "http://localhost:3000",

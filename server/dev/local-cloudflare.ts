@@ -137,7 +137,7 @@ export default defineNitroPlugin((nitroApp) => {
   if (!databaseId) throw new Error("database_id tidak ditemukan di wrangler.web.jsonc.");
   const localD1 = createD1(resolve(".wrangler", "state", "v3", "d1", "miniflare-D1DatabaseObject", `${databaseId}.sqlite`));
   const queue = { send: async () => {}, sendBatch: async () => {} } as unknown as Queue;
-  const values = Object.fromEntries(Object.entries(process.env).filter(([key]) => /^(NUXT_PUBLIC_|BETTER_AUTH_|GOOGLE_|R2_|SUMOPOD_|BCE_)/.test(key)));
+  const values = Object.fromEntries(Object.entries(process.env).filter(([key]) => /^(NUXT_PUBLIC_|BETTER_AUTH_|GOOGLE_|R2_|SUMOPOD_|BCE_|RAJAONGKIR_|GEOCODER_)/.test(key)));
   const env = { ...values, DB: localD1.binding, PRODUCT_IMAGES: createR2(), SHIPMENT_QUEUE: queue, TRACKING_QUEUE: queue } as unknown as CloudflareBindings;
 
   console.warn("[cloudflare-dev] Menggunakan fallback Node SQLite/R2 lokal. Queue send disimulasikan tanpa consumer.");

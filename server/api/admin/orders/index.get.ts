@@ -6,25 +6,23 @@ export default defineEventHandler(async (event) => {
   }
 
   const bucketClause = requestedBucket === "needs_processing"
-    ? "AND s.label_printed_at IS NULL"
+    ? "AND ((s.provider='BCE' AND s.awb_number IS NOT NULL AND s.label_printed_at IS NULL) OR (s.provider='JNE' AND s.awb_number IS NULL))"
     : requestedBucket === "processed"
-      ? "AND s.label_printed_at IS NOT NULL"
+      ? "AND ((s.provider='BCE' AND s.label_printed_at IS NOT NULL) OR (s.provider='JNE' AND s.awb_number IS NOT NULL))"
       : "";
   const activeClause = requestedBucket === "all" ? "" : `
-    WHERE o.payment_status='paid' AND s.awb_number IS NOT NULL
-      AND o.status NOT IN ('fulfilled','cancelled') AND s.status<>'delivered' ${bucketClause}`;
+    WHERE o.payment_status='paid' AND o.status NOT IN ('fulfilled','cancelled') AND s.status<>'delivered' ${bucketClause}`;
   const db = bindings(event).DB;
   const [orders, counts] = await Promise.all([
-    db.prepare(`SELECT o.*,s.id shipment_id,s.awb_number,s.status shipment_status,
-      s.error_message shipment_error,s.label_printed_at
-      FROM orders o LEFT JOIN shipments s ON s.order_id=o.id
+    db.prepare(`SELECT o.*,s.id shipment_id,s.provider shipping_provider,s.awb_number,s.status shipment_status,
+      s.error_message shipment_error,s.label_printed_at,q.service_name shipping_service
+      FROM orders o LEFT JOIN shipments s ON s.order_id=o.id LEFT JOIN shipping_quotes q ON q.order_id=o.id
       ${activeClause} ORDER BY o.created_at DESC`).all(),
     db.prepare(`SELECT
-      COALESCE(SUM(CASE WHEN s.label_printed_at IS NULL THEN 1 ELSE 0 END),0) needs_processing,
-      COALESCE(SUM(CASE WHEN s.label_printed_at IS NOT NULL THEN 1 ELSE 0 END),0) processed
+      COALESCE(SUM(CASE WHEN (s.provider='BCE' AND s.awb_number IS NOT NULL AND s.label_printed_at IS NULL) OR (s.provider='JNE' AND s.awb_number IS NULL) THEN 1 ELSE 0 END),0) needs_processing,
+      COALESCE(SUM(CASE WHEN (s.provider='BCE' AND s.label_printed_at IS NOT NULL) OR (s.provider='JNE' AND s.awb_number IS NOT NULL) THEN 1 ELSE 0 END),0) processed
       FROM orders o JOIN shipments s ON s.order_id=o.id
-      WHERE o.payment_status='paid' AND s.awb_number IS NOT NULL
-        AND o.status NOT IN ('fulfilled','cancelled') AND s.status<>'delivered'`)
+      WHERE o.payment_status='paid' AND o.status NOT IN ('fulfilled','cancelled') AND s.status<>'delivered'`)
       .first<{ needs_processing: number; processed: number }>(),
   ]);
   return {

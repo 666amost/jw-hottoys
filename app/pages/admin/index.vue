@@ -23,6 +23,8 @@ type DashboardOrder = {
   total_amount: number;
   created_at: string;
   label_printed_at: string | null;
+  shipping_provider: "BCE" | "JNE" | null;
+  shipping_service: string | null;
 };
 
 const { data } = await useFetch("/api/admin/overview");
@@ -121,7 +123,7 @@ useSeoMeta({ title: "Admin Dashboard" });
       >
         <span class="min-w-0 flex-1">
           <span class="block text-xs font-extrabold uppercase tracking-[.1em] text-amber-700">Pesanan perlu diproses</span>
-          <span class="mt-1 block text-xs text-slate-500">Sudah dibayar dan memiliki AWB, label belum dicetak.</span>
+          <span class="mt-1 block text-xs text-slate-500">Label BCE belum dicetak atau resi JNE belum dimasukkan.</span>
         </span>
         <strong class="shrink-0 text-3xl font-black tracking-tight text-slate-950">{{ data?.metrics.needsProcessing ?? 0 }}</strong>
         <ArrowRight :size="21" class="shrink-0 text-slate-300 transition group-hover:translate-x-1 group-hover:text-amber-600" />
@@ -133,7 +135,7 @@ useSeoMeta({ title: "Admin Dashboard" });
       >
         <span class="min-w-0 flex-1">
           <span class="block text-xs font-extrabold uppercase tracking-[.1em] text-emerald-700">Pesanan sudah diproses</span>
-          <span class="mt-1 block text-xs text-slate-500">Label sudah dicetak dan pengiriman belum selesai.</span>
+          <span class="mt-1 block text-xs text-slate-500">Label BCE sudah dicetak atau resi JNE sudah tersimpan.</span>
         </span>
         <strong class="shrink-0 text-3xl font-black tracking-tight text-slate-950">{{ data?.metrics.processed ?? 0 }}</strong>
         <ArrowRight :size="21" class="shrink-0 text-slate-300 transition group-hover:translate-x-1 group-hover:text-emerald-600" />
@@ -175,6 +177,7 @@ useSeoMeta({ title: "Admin Dashboard" });
             <div class="min-w-0">
               <p class="break-words text-sm font-black text-slate-900">{{ order.order_number }}</p>
               <p class="mt-1 truncate text-xs text-slate-500" :title="order.recipient_name">{{ order.recipient_name }} · {{ formatDate(order.created_at) }}</p>
+              <p v-if="order.shipping_provider" class="mt-1 text-[11px] font-bold text-[#0b4697]">{{ order.shipping_service || order.shipping_provider }}</p>
               <div class="mt-2 flex min-w-0 flex-wrap items-center gap-2">
                 <span
                   class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold ring-1 ring-inset"

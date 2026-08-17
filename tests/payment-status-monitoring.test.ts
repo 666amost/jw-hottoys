@@ -41,6 +41,14 @@ describe("payment status monitoring", () => {
     expect(decision.shouldPoll).toBe(true);
   });
 
+  it("does not poll for a manually fulfilled JNE AWB", () => {
+    expect(getPaymentMonitoringDecision(1_000, 0, { ...baseStatus, payment_status: "paid", shipping_provider: "JNE" }, null)).toEqual({
+      shouldPoll: false,
+      deadline: null,
+      awbDeadline: null,
+    });
+  });
+
   it("stops polling as soon as an AWB is available", () => {
     const decision = getPaymentMonitoringDecision(Date.now(), Date.now(), {
       ...baseStatus,

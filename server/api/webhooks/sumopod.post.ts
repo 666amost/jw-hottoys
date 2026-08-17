@@ -27,10 +27,10 @@ export default defineEventHandler(async (event) => {
   const inserted = await db.prepare("INSERT OR IGNORE INTO payment_events(id,provider,event_id,order_number,event_type,payload,processed_at) VALUES(?,?,?,?,?,?,datetime('now'))")
     .bind(crypto.randomUUID(), "sumopod", eventId, parsed.data.data.order_id, parsed.data.event_type, JSON.stringify(verified)).run();
   if (!inserted.meta.changes) return { received: true, transaction: { result: "duplicate" } };
-  const order = await db.prepare(`SELECT o.id,o.user_id,o.payment_status,o.expires_at,o.voucher_id,o.voucher_discount_amount,p.external_payment_id,p.amount,p.currency
-    FROM orders o JOIN payments p ON p.order_id=o.id WHERE o.order_number=?`).bind(parsed.data.data.order_id).first<{
+  const order = await db.prepare(`SELECT o.id,o.user_id,o.payment_status,o.expires_at,o.voucher_id,o.voucher_discount_amount,p.external_payment_id,p.amount,p.currency,q.provider,q.service_name
+    FROM orders o JOIN payments p ON p.order_id=o.id JOIN shipping_quotes q ON q.order_id=o.id WHERE o.order_number=?`).bind(parsed.data.data.order_id).first<{
       id: string; user_id: string; payment_status: string; expires_at: string; voucher_id: string | null; voucher_discount_amount: number;
-      external_payment_id: string | null; amount: number; currency: string;
+      external_payment_id: string | null; amount: number; currency: string; provider: "BCE" | "JNE"; service_name: string;
     }>();
   if (!order) apiError(404, "ORDER_NOT_FOUND", "Order webhook tidak ditemukan.");
   const now = new Date();
@@ -45,11 +45,13 @@ export default defineEventHandler(async (event) => {
       db.prepare("UPDATE orders SET status='paid',payment_status='paid',paid_at=?,updated_at=? WHERE id=? AND payment_status='pending'").bind(nowIso, nowIso, order.id),
       db.prepare("UPDATE stock_reservations SET status='consumed',updated_at=? WHERE order_id=? AND status='active'").bind(nowIso, order.id),
       db.prepare("UPDATE voucher_reservations SET status='consumed' WHERE order_id=? AND status='active'").bind(order.id),
-      db.prepare("INSERT OR IGNORE INTO shipments(id,order_id,provider,status,created_at,updated_at) VALUES(?,?,'BCE','pending_awb',?,?)").bind(crypto.randomUUID(), order.id, nowIso, nowIso),
-      db.prepare("INSERT OR IGNORE INTO outbox_jobs(id,kind,dedupe_key,payload,status,available_at,created_at,updated_at) VALUES(?,'shipment_creation',?,?, 'pending',?,?,?)")
-        .bind(outboxId, order.id, JSON.stringify({ orderId: order.id }), nowIso, nowIso, nowIso),
+      db.prepare("INSERT OR IGNORE INTO shipments(id,order_id,provider,status,created_at,updated_at) VALUES(?,?,?,'pending_awb',?,?)").bind(crypto.randomUUID(), order.id, order.provider, nowIso, nowIso),
       db.prepare("INSERT INTO order_status_history(id,order_id,status,note,created_at) VALUES(?,?,'paid','Pembayaran QRIS terverifikasi',?)").bind(crypto.randomUUID(), order.id, nowIso),
     ];
+    if (order.provider === "BCE") statements.push(
+      db.prepare("INSERT OR IGNORE INTO outbox_jobs(id,kind,dedupe_key,payload,status,available_at,created_at,updated_at) VALUES(?,'shipment_creation',?,?, 'pending',?,?,?)")
+        .bind(outboxId, order.id, JSON.stringify({ orderId: order.id }), nowIso, nowIso, nowIso),
+    );
     if (order.voucher_id) {
       statements.push(
         db.prepare("UPDATE vouchers SET used_count=used_count+1 WHERE id=? AND NOT EXISTS(SELECT 1 FROM voucher_redemptions WHERE order_id=?)").bind(order.voucher_id, order.id),
@@ -57,7 +59,7 @@ export default defineEventHandler(async (event) => {
       );
     }
     await db.batch(statements);
-    try { await dispatchOutbox(env, outboxId); } catch { /* cron retries the outbox */ }
+    if (order.provider === "BCE") try { await dispatchOutbox(env, outboxId); } catch { /* cron retries the outbox */ }
     return { received: true, transaction: { result: "paid", order_id: order.id } };
   }
   if (parsed.data.event_type === "payment.completed") {

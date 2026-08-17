@@ -7,9 +7,7 @@ import {
   PhMapPin as MapPin,
   PhStorefront as Storefront,
 } from "@phosphor-icons/vue";
-import { SUPPORTED_CITIES, SUPPORTED_PROVINCES } from "~~/shared/address-regions";
-
-type RegionOption = { code: string; name: string };
+type RegionOption = { code: string; name: string; latitude?: number | null; longitude?: number | null };
 
 definePageMeta({ middleware: "auth" });
 
@@ -19,8 +17,10 @@ const error = ref("");
 const regionError = ref("");
 const districtsLoading = ref(false);
 const villagesLoading = ref(false);
+const provinces = ref<RegionOption[]>([]);
+const cities = ref<RegionOption[]>([]);
 const selectedProvinceCode = ref("31");
-const selectedCityCode = ref("31.71");
+const selectedCityCode = ref("3174");
 const selectedDistrictCode = ref("");
 const selectedVillageCode = ref("");
 const districts = ref<RegionOption[]>([]);
@@ -32,10 +32,10 @@ const form = reactive({
   label: "Rumah",
   recipientName: "",
   phone: "",
-  province: "DKI Jakarta",
-  city: "Jakarta Selatan",
-  district: "",
-  subdistrict: "",
+  provinceCode: "31",
+  cityCode: "3174",
+  districtCode: "",
+  subdistrictCode: "",
   postalCode: "",
   addressLine: "",
   landmark: "",
@@ -44,7 +44,6 @@ const form = reactive({
   isDefault: true,
 });
 
-const cities = computed(() => SUPPORTED_CITIES.filter((city) => city.provinceCode === selectedProvinceCode.value));
 const returnPath = computed(() => {
   const next = typeof route.query.next === "string" ? route.query.next : "";
   return next.startsWith("/") && !next.startsWith("//") ? next : "/account/addresses";
@@ -59,8 +58,8 @@ async function loadDistricts(cityCode: string) {
   villages.value = [];
   selectedDistrictCode.value = "";
   selectedVillageCode.value = "";
-  form.district = "";
-  form.subdistrict = "";
+  form.districtCode = "";
+  form.subdistrictCode = "";
   try {
     const result = await $fetch<{ regions: RegionOption[] }>("/api/regions", { query: { level: "districts", parent: cityCode } });
     if (request === districtRequest) districts.value = result.regions;
@@ -77,7 +76,7 @@ async function loadVillages(districtCode: string) {
   regionError.value = "";
   villages.value = [];
   selectedVillageCode.value = "";
-  form.subdistrict = "";
+  form.subdistrictCode = "";
   try {
     const result = await $fetch<{ regions: RegionOption[] }>("/api/regions", { query: { level: "villages", parent: districtCode } });
     if (request === villageRequest) villages.value = result.regions;
@@ -89,33 +88,47 @@ async function loadVillages(districtCode: string) {
 }
 
 async function provinceChanged() {
-  const province = SUPPORTED_PROVINCES.find((item) => item.code === selectedProvinceCode.value);
-  form.province = province?.name || "";
+  form.provinceCode = selectedProvinceCode.value;
+  const result = await $fetch<{ regions: RegionOption[] }>("/api/regions", { query: { level: "cities", parent: selectedProvinceCode.value } });
+  cities.value = result.regions;
   const firstCity = cities.value[0];
   selectedCityCode.value = firstCity?.code || "";
-  form.city = firstCity?.name || "";
+  form.cityCode = firstCity?.code || "";
   if (firstCity) await loadDistricts(firstCity.code);
 }
 
 async function cityChanged() {
-  const city = SUPPORTED_CITIES.find((item) => item.code === selectedCityCode.value);
-  form.city = city?.name || "";
-  if (city) await loadDistricts(city.code);
+  form.cityCode = selectedCityCode.value;
+  if (selectedCityCode.value) await loadDistricts(selectedCityCode.value);
 }
 
 async function districtChanged() {
-  const district = districts.value.find((item) => item.code === selectedDistrictCode.value);
-  form.district = district?.name || "";
-  if (district) await loadVillages(district.code);
+  form.districtCode = selectedDistrictCode.value;
+  if (selectedDistrictCode.value) await loadVillages(selectedDistrictCode.value);
 }
 
-function villageChanged() {
-  form.subdistrict = villages.value.find((item) => item.code === selectedVillageCode.value)?.name || "";
+async function villageChanged() {
+  form.subdistrictCode = selectedVillageCode.value;
+  const village = villages.value.find(item => item.code === selectedVillageCode.value);
+  if (!village) return;
+  if (Number.isFinite(village.latitude) && Number.isFinite(village.longitude)) {
+    form.latitude = village.latitude!;
+    form.longitude = village.longitude!;
+    return;
+  }
+  const province = provinces.value.find(item => item.code === selectedProvinceCode.value)?.name || "";
+  const city = cities.value.find(item => item.code === selectedCityCode.value)?.name || "";
+  const district = districts.value.find(item => item.code === selectedDistrictCode.value)?.name || "";
+  try {
+    const point = await $fetch<{ latitude: number; longitude: number }>("/api/geocode", { query: { province, city, district, subdistrict: village.name, postalCode: form.postalCode } });
+    form.latitude = point.latitude;
+    form.longitude = point.longitude;
+  } catch { /* pin tetap dapat dipilih manual */ }
 }
 
 async function save() {
   if (loading.value) return;
-  if (!form.district || !form.subdistrict) {
+  if (!form.districtCode || !form.subdistrictCode) {
     error.value = "Pilih kecamatan dan kelurahan sesuai alamat pengiriman.";
     return;
   }
@@ -132,7 +145,13 @@ async function save() {
   }
 }
 
-onMounted(() => void loadDistricts(selectedCityCode.value));
+onMounted(async () => {
+  const result = await $fetch<{ regions: RegionOption[] }>("/api/regions", { query: { level: "provinces" } });
+  provinces.value = result.regions;
+  const cityResult = await $fetch<{ regions: RegionOption[] }>("/api/regions", { query: { level: "cities", parent: selectedProvinceCode.value } });
+  cities.value = cityResult.regions;
+  await loadDistricts(selectedCityCode.value);
+});
 useSeoMeta({ title: "Alamat Baru" });
 </script>
 
@@ -176,7 +195,7 @@ useSeoMeta({ title: "Alamat Baru" });
               <div><p class="text-[9px] font-black uppercase tracking-[.14em] text-[#ec0016]">Wilayah pengiriman</p><h2 class="mt-0.5 text-lg font-black">Pilih Alamat lengkapmu</h2></div>
             </header>
             <div class="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
-              <label class="field-label"><span>Provinsi <span class="text-red-600">*</span></span><select v-model="selectedProvinceCode" class="field" required @change="provinceChanged"><option v-for="province in SUPPORTED_PROVINCES" :key="province.code" :value="province.code">{{ province.name }}</option></select></label>
+              <label class="field-label"><span>Provinsi <span class="text-red-600">*</span></span><select v-model="selectedProvinceCode" class="field" required @change="provinceChanged"><option v-for="province in provinces" :key="province.code" :value="province.code">{{ province.name }}</option></select></label>
               <label class="field-label"><span>Kota/Kabupaten <span class="text-red-600">*</span></span><select v-model="selectedCityCode" class="field" required @change="cityChanged"><option v-for="city in cities" :key="city.code" :value="city.code">{{ city.name }}</option></select></label>
               <label class="field-label"><span>Kecamatan <span class="text-red-600">*</span></span><select v-model="selectedDistrictCode" class="field" required :disabled="districtsLoading || !districts.length" @change="districtChanged"><option value="" disabled>{{ districtsLoading ? "Memuat kecamatan..." : "Pilih kecamatan" }}</option><option v-for="district in districts" :key="district.code" :value="district.code">{{ district.name }}</option></select></label>
               <label class="field-label"><span>Kelurahan <span class="text-red-600">*</span></span><select v-model="selectedVillageCode" class="field" required :disabled="villagesLoading || !villages.length" @change="villageChanged"><option value="" disabled>{{ villagesLoading ? "Memuat kelurahan..." : selectedDistrictCode ? "Pilih kelurahan" : "Pilih kecamatan dahulu" }}</option><option v-for="village in villages" :key="village.code" :value="village.code">{{ village.name }}</option></select></label>
@@ -197,7 +216,7 @@ useSeoMeta({ title: "Alamat Baru" });
               <span><span class="block text-sm font-black">Alamat utama</span><span class="mt-1 block text-[11px] leading-4 text-slate-500">Dipilih otomatis saat checkout.</span></span>
               <span class="relative shrink-0"><input v-model="form.isDefault" type="checkbox" class="peer sr-only"><span class="block h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-[#0b4697] after:absolute after:left-1 after:top-1 after:size-4 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5" /></span>
             </label>
-            <div class="mt-4 flex gap-2 rounded-xl bg-blue-50 p-3 text-[11px] leading-5 text-slate-600"><Info :size="17" weight="fill" class="mt-0.5 shrink-0 text-[#0b4697]" />Saat ini pengiriman hanya tersedia untuk Jakarta dan Tangerang.</div>
+            <div class="mt-4 flex gap-2 rounded-xl bg-blue-50 p-3 text-[11px] leading-5 text-slate-600"><Info :size="17" weight="fill" class="mt-0.5 shrink-0 text-[#0b4697]" />Lima kota Jakarta, Kota Tangerang, dan Tangerang Selatan dikirim dengan BCE Express. Wilayah Indonesia lainnya menggunakan JNE.</div>
             <AppButton type="submit" class="mt-5 w-full" :disabled="loading || districtsLoading || villagesLoading"><CheckCircle :size="18" weight="fill" /> {{ loading ? "Menyimpan alamat..." : "Simpan alamat" }}</AppButton>
           </div>
         </aside>

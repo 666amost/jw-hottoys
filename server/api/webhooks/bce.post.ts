@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const parsed = schema.safeParse(JSON.parse(raw));
   if (!parsed.success) apiError(422, "INVALID_EVENT", "Payload webhook BCE tidak valid.");
   const db = bindings(event).DB;
-  const shipment = await db.prepare("SELECT id,status FROM shipments WHERE awb_number=?").bind(parsed.data.awb_number).first<{ id: string; status: string }>();
+  const shipment = await db.prepare("SELECT id,status FROM shipments WHERE awb_number=? AND provider='BCE'").bind(parsed.data.awb_number).first<{ id: string; status: string }>();
   if (!shipment) apiError(404, "AWB_NOT_FOUND", "AWB tidak dikenal.");
   const inserted = await db.prepare("INSERT OR IGNORE INTO shipment_events(id,shipment_id,external_event_id,status,location,note,occurred_at,payload) VALUES(?,?,?,?,?,?,?,?)")
     .bind(crypto.randomUUID(), shipment.id, parsed.data.event_id, parsed.data.status, parsed.data.location ?? "", parsed.data.note ?? "", parsed.data.occurred_at, raw).run();

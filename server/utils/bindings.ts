@@ -21,6 +21,10 @@ export function appConfig(event: H3Event) {
     bceApiUrl: String(bound?.BCE_API_URL || runtime.bceApiUrl || ""),
     bcePartnerKey: String(bound?.BCE_PARTNER_KEY || runtime.bcePartnerKey || ""),
     bceWebhookSecret: String(bound?.BCE_WEBHOOK_SECRET || runtime.bceWebhookSecret || ""),
+    rajaOngkirApiUrl: String(bound?.RAJAONGKIR_API_URL || runtime.rajaOngkirApiUrl || "https://rajaongkir.komerce.id/api/v1"),
+    rajaOngkirApiKey: String(bound?.RAJAONGKIR_API_KEY || runtime.rajaOngkirApiKey || ""),
+    rajaOngkirOriginId: String(bound?.RAJAONGKIR_ORIGIN_ID || runtime.rajaOngkirOriginId || ""),
+    geocoderApiUrl: String(bound?.GEOCODER_API_URL || runtime.geocoderApiUrl || "https://nominatim.openstreetmap.org"),
     r2PublicBaseUrl: String(bound?.R2_PUBLIC_BASE_URL || runtime.r2PublicBaseUrl || ""),
   };
 }

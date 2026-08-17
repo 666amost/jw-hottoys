@@ -8,6 +8,8 @@ const schema = readFileSync(resolve(root, "database/migrations/0001_initial.sql"
 const removeDemoCatalog = readFileSync(resolve(root, "database/migrations/0002_remove_demo_catalog.sql"), "utf8");
 const fixBetterAuthDates = readFileSync(resolve(root, "database/migrations/0003_fix_better_auth_dates.sql"), "utf8");
 const fulfillmentLabelPrinting = readFileSync(resolve(root, "database/migrations/0004_fulfillment_label_printing.sql"), "utf8");
+const multiCarrierShipping = readFileSync(resolve(root, "database/migrations/0005_multi_carrier_shipping.sql"), "utf8");
+const regionGeocodeCache = readFileSync(resolve(root, "database/migrations/0006_region_geocode_cache.sql"), "utf8");
 const seed = readFileSync(resolve(root, "database/seed.sql"), "utf8");
 let db: DatabaseSync;
 
@@ -49,10 +51,24 @@ beforeEach(() => {
     throw error;
   }
   db.exec(fulfillmentLabelPrinting);
+  db.exec(multiCarrierShipping);
+  db.exec(regionGeocodeCache);
 });
 afterEach(() => db.close());
 
 describe("D1 transactional invariants", () => {
+  it("migrates existing addresses and orders without requiring network data", () => {
+    expect(db.prepare("SELECT region_code,rajaongkir_destination_id FROM addresses WHERE id='address-1'").get()).toMatchObject({
+      region_code: null,
+      rajaongkir_destination_id: null,
+    });
+    db.prepare(`INSERT INTO shipping_quotes(id,order_id,total_weight_grams,billable_weight_kg,reference_amount,discount_amount,charged_amount,created_at)
+      VALUES('legacy-quote','migration-order',500,1,10000,0,10000,'2026')`).run();
+    expect(db.prepare("SELECT provider,service_code FROM shipping_quotes WHERE id='legacy-quote'").get()).toMatchObject({ provider: "BCE", service_code: "BCE_STANDARD" });
+    expect(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='checkout_shipping_quotes'").get()).toBeTruthy();
+    expect(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='region_geocode_cache'").get()).toBeTruthy();
+  });
+
   it("stores Better Auth dates as ISO text and preserves auth/address ownership", () => {
     const sessionColumns = db.prepare("PRAGMA table_info(session)").all() as Array<{ name: string; type: string }>;
     expect(sessionColumns.find(column => column.name === "expiresAt")?.type).toBe("TEXT");

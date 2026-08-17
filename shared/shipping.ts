@@ -1,4 +1,5 @@
 import type { CartLine, ShippingPrice } from "./types";
+import { isBceCityCode } from "./address-regions";
 
 export const SHIPPING_RATE_PER_KG = 10_000;
 export const FLAT_PROMO_MAX_KG = 3;
@@ -16,7 +17,8 @@ export function calculateCartShipping(lines: Pick<CartLine, "quantity" | "shippi
   return calculateShippingFromWeight(lines.reduce((total, line) => total + Math.max(0, Math.floor(line.quantity)) * line.shippingWeightGrams, 0));
 }
 
-export function isSupportedDestination(city: string) {
-  const normalized = city.trim().toLowerCase();
-  return normalized.includes("jakarta") || normalized.includes("tangerang");
+export function isSupportedDestination(city: string, cityCode?: string | null) {
+  if (cityCode) return isBceCityCode(cityCode);
+  const normalized = city.trim().toLowerCase().replace(/^kota(?: administrasi)?\s+/, "");
+  return ["jakarta pusat", "jakarta utara", "jakarta barat", "jakarta selatan", "jakarta timur", "tangerang", "tangerang selatan"].includes(normalized);
 }

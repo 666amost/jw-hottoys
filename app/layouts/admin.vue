@@ -48,7 +48,7 @@ const navigation = [
     label: "Website & layanan",
     links: [
       { href: "/admin/content", label: "Billboard", icon: Megaphone },
-      { href: "/admin/integrations", label: "Integrasi BCE", icon: PlugsConnected },
+      { href: "/admin/integrations", label: "Integrasi Pengiriman", icon: PlugsConnected },
     ],
   },
 ];

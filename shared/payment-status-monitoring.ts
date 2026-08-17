@@ -6,6 +6,8 @@ export type PaymentStatusData = {
   expires_at?: string | null;
   awb_number?: string | null;
   shipment_status?: string | null;
+  shipping_provider?: "BCE" | "JNE" | null;
+  shipping_service?: string | null;
 };
 
 export const QRIS_MONITORING_WINDOW_MS = 30 * 60 * 1000;
@@ -47,6 +49,7 @@ export function getPaymentMonitoringDecision(
   awbDeadline: number | null,
 ): PaymentMonitoringDecision {
   if (current.payment_status === "paid") {
+    if (current.shipping_provider === "JNE") return { shouldPoll: false, deadline: null, awbDeadline };
     if (current.awb_number) return { shouldPoll: false, deadline: null, awbDeadline };
     const nextAwbDeadline = awbDeadline ?? now + AWB_WAIT_WINDOW_MS;
     return { shouldPoll: true, deadline: nextAwbDeadline, awbDeadline: nextAwbDeadline };

@@ -15,6 +15,9 @@ type OrderDetail = {
   payment_status: string;
   shipment_status: string | null;
   awb_number: string | null;
+  shipping_provider: "BCE" | "JNE" | null;
+  shipping_service: string | null;
+  shipping_etd: string | null;
   payment_url: string | null;
   total_amount: number;
 };
@@ -43,8 +46,9 @@ const statusStyles: Record<string, string> = {
 };
 
 const trackingUrl = computed(() => {
-  const awb = String((data.value?.order as { awb_number?: string | null } | undefined)?.awb_number || "");
-  return buildBceTrackingUrl(String(config.public.bceTrackingUrl || ""), awb);
+  const value = data.value?.order as unknown as OrderDetail | undefined;
+  if (!value?.awb_number) return null;
+  return value.shipping_provider === "JNE" ? "https://www.jne.co.id/tracking-package" : buildBceTrackingUrl(String(config.public.bceTrackingUrl || ""), value.awb_number);
 });
 
 useSeoMeta({ title: () => String((data.value?.order as { order_number?: string } | undefined)?.order_number || "Detail Pesanan") });
@@ -82,7 +86,9 @@ useSeoMeta({ title: () => String((data.value?.order as { order_number?: string }
         <p v-if="order?.shipment_status" class="mt-4 text-xs text-slate-500"><b>Pembayaran:</b> {{ paymentStatusLabel(order.payment_status) }}</p>
         <p class="mt-5 text-sm text-slate-500">Total</p>
         <p class="mt-1 text-2xl font-black">{{ formatCurrency(Number(order?.total_amount || 0)) }}</p>
-        <p v-if="order?.awb_number" class="mt-5 break-all text-sm"><b>AWB BCE:</b> {{ order.awb_number }}</p>
+        <p v-if="order?.shipping_service" class="mt-5 text-sm"><b>Pengiriman:</b> {{ order.shipping_service }}</p>
+        <p v-if="order?.shipping_etd" class="mt-1 text-sm text-slate-500"><b>Estimasi:</b> {{ order.shipping_etd }}</p>
+        <p v-if="order?.awb_number" class="mt-2 break-all text-sm"><b>AWB {{ order.shipping_provider }}:</b> {{ order.awb_number }}</p>
         <a
           v-if="trackingUrl"
           :href="trackingUrl"
@@ -90,7 +96,7 @@ useSeoMeta({ title: () => String((data.value?.order as { order_number?: string }
           rel="noopener noreferrer"
           class="mt-3 block text-sm font-black text-[#0b4697] underline"
         >
-          Lacak di BCE Express
+          Lacak di {{ order?.shipping_provider === "JNE" ? "JNE" : "BCE Express" }}
         </a>
         <a
           v-if="order?.payment_url && order.payment_status === 'pending'"
