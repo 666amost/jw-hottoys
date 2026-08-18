@@ -152,7 +152,11 @@ async function save() {
     await refreshNuxtData("/api/account/addresses");
     await navigateTo({ path: returnPath.value, query: returnPath.value === "/checkout" ? { addressAdded: "1" } : { created: "1" } });
   } catch (cause: any) {
-    error.value = cause?.data?.data?.error?.message || cause?.data?.statusMessage || "Alamat gagal disimpan.";
+    error.value = cause?.data?.error?.message
+      || cause?.data?.data?.error?.message
+      || cause?.data?.statusMessage
+      || cause?.statusMessage
+      || "Alamat gagal disimpan.";
     loading.value = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -198,7 +202,7 @@ useSeoMeta({ title: "Alamat Baru" });
                 </div>
               </fieldset>
               <label class="field-label"><span>Nama penerima <span class="text-red-600">*</span></span><input v-model="form.recipientName" class="field" required autocomplete="name" placeholder="Nama lengkap penerima"><small class="field-helper">Gunakan nama yang dikenali di lokasi tujuan.</small></label>
-              <label class="field-label"><span>Nomor telepon <span class="text-red-600">*</span></span><input v-model="form.phone" class="field" required inputmode="tel" autocomplete="tel" placeholder="Contoh: 081234567890"><small class="field-helper">Digunakan kurir jika membutuhkan petunjuk.</small></label>
+              <label class="field-label"><span>Nomor telepon <span class="text-red-600">*</span></span><input v-model="form.phone" class="field" required minlength="8" maxlength="20" pattern="[0-9+() -]{8,20}" inputmode="tel" autocomplete="tel" placeholder="Contoh: 081234567890" title="Masukkan nomor telepon 8–20 karakter"><small class="field-helper">Minimal 8 karakter. Digunakan kurir jika membutuhkan petunjuk.</small></label>
             </div>
           </section>
 

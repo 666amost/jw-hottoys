@@ -2,7 +2,7 @@ export default defineEventHandler(async (event) => {
   assertSafeMutation(event);
   const session = await requireUser(event);
   const parsed = addressInputSchema.safeParse(await readLimitedBody(event));
-  if (!parsed.success) apiError(422, "VALIDATION_ERROR", "Alamat tidak valid.");
+  if (!parsed.success) apiError(422, "VALIDATION_ERROR", addressValidationMessage(parsed.error));
   let address: Awaited<ReturnType<typeof prepareAddressInput>>;
   try { address = await prepareAddressInput(appConfig(event), parsed.data); }
   catch (error) {

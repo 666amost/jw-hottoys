@@ -2,7 +2,7 @@ export default defineEventHandler(async (event) => {
   assertSafeMutation(event);
   const session = await requireUser(event);
   const parsed = addressInputSchema.safeParse(await readLimitedBody(event));
-  if (!parsed.success) apiError(422, "VALIDATION_ERROR", "Alamat tidak valid.");
+  if (!parsed.success) apiError(422, "VALIDATION_ERROR", addressValidationMessage(parsed.error));
   const id = getRouterParam(event, "id");
   const db = bindings(event).DB;
   const owned = await db.prepare("SELECT id,region_code,postal_code,rajaongkir_destination_id FROM addresses WHERE id=? AND user_id=?").bind(id, session.user.id)
