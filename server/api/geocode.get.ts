@@ -11,7 +11,9 @@ export default defineEventHandler(async (event) => {
   await requireUser(event);
   const parsed = schema.safeParse(getQuery(event));
   if (!parsed.success) apiError(422, "INVALID_REGION", "Wilayah untuk peta tidak valid.");
-  const queryText = [parsed.data.subdistrict, parsed.data.district, parsed.data.city, parsed.data.province, parsed.data.postalCode, "Indonesia"].filter(Boolean).join(", ");
+  // Postal-code coverage in OpenStreetMap is incomplete and a mistyped code should
+  // not prevent the map from centering on an otherwise valid administrative area.
+  const queryText = [parsed.data.subdistrict, parsed.data.district, parsed.data.city, parsed.data.province, "Indonesia"].filter(Boolean).join(", ");
   const key = queryText.toLowerCase();
   const cached = cache.get(key);
   if (cached) return cached;

@@ -33,6 +33,7 @@ function normalizeRegion(value: string) {
   const aliases: Record<string, string> = {
     daerahkhususibukotajakarta: "dkijakarta",
     daerahistimewayogyakarta: "diyogyakarta",
+    toba: "tobasamosir",
   };
   return aliases[normalized] ?? normalized;
 }

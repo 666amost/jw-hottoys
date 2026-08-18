@@ -52,6 +52,16 @@ describe("RajaOngkir Shipping Cost client", () => {
     expect(destination.id).toBe(90);
   });
 
+  it("matches Kabupaten Toba to RajaOngkir's historical Toba Samosir name", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response({ meta: { code: 200, status: "success", message: "ok" }, data: [
+      { id: 26755, label: "Balige III", province_name: "Sumatera Utara", city_name: "Toba Samosir", district_name: "Balige", subdistrict_name: "Balige III", zip_code: "22315" },
+    ] })));
+    const destination = await resolveRajaOngkirDestination(config, {
+      province: "Sumatera Utara", city: "Kabupaten Toba", district: "Balige", subdistrict: "Balige III", postalCode: "22315",
+    });
+    expect(destination.id).toBe(26755);
+  });
+
   it("returns all JNE services using one form-encoded tariff request", async () => {
     const fetchMock = vi.fn().mockResolvedValue(response({ meta: { code: 200, status: "success", message: "ok" }, data: [
       { name: "Jalur Nugraha Ekakurir", code: "jne", service: "REG", description: "Layanan Reguler", cost: 18000, etd: "2-3 day" },
