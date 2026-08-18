@@ -9,6 +9,7 @@
     "R2_PUBLIC_BASE_URL": "https://jwlab.figur.workers.dev/api/assets",
     "BCE_API_URL": "https://www.bcexp.id",
     "RAJAONGKIR_API_URL": "https://rajaongkir.komerce.id/api/v1",
+    "RAJAONGKIR_ORIGIN_ID": "73330",
     "GEOCODER_API_URL": "https://nominatim.openstreetmap.org",
     "NUXT_PUBLIC_BCE_TRACKING_URL": "https://www.bcexp.id/track"
   },
