@@ -6,6 +6,11 @@ const schema = z.object({
   postalCode: z.string().trim().regex(/^\d{5}$/).optional().or(z.literal("")),
 });
 const cache = new Map<string, { latitude: number; longitude: number }>();
+const unavailable = (reason: "rate_limited" | "upstream_unavailable") => ({
+  found: false as const,
+  reason,
+  message: "Pusat peta belum tersedia. Gunakan lokasi saya atau geser pin secara manual.",
+});
 
 export default defineEventHandler(async (event) => {
   await requireUser(event);
@@ -24,9 +29,7 @@ export default defineEventHandler(async (event) => {
     cache.set(key, stored);
     return stored;
   }
-  if (!await consumeRateLimit(db, "geocoder:nominatim", 1, 1)) {
-    apiError(429, "GEOCODER_RATE_LIMITED", "Pusat peta sedang sibuk. Pilih pin secara manual atau coba wilayah ini kembali.");
-  }
+  if (!await consumeRateLimit(db, "geocoder:nominatim", 1, 1)) return unavailable("rate_limited");
   try {
     const config = appConfig(event);
     const params = new URLSearchParams({ q: queryText, format: "jsonv2", limit: "1", countrycodes: "id" });
@@ -45,5 +48,10 @@ export default defineEventHandler(async (event) => {
       .bind(key, latitude, longitude, new Date().toISOString()).run();
     return point;
   }
-  catch { apiError(502, "GEOCODER_UNAVAILABLE", "Titik wilayah belum dapat ditemukan. Pilih pin secara manual."); }
+  catch (error) {
+    // Geocoding only assists map recentering and must never block address entry.
+    // Log the safe upstream reason so production diagnostics remain actionable.
+    console.error("[Geocoder] Gagal mencari pusat wilayah", error instanceof Error ? error.message : "UNKNOWN_ERROR");
+    return unavailable("upstream_unavailable");
+  }
 });

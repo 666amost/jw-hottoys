@@ -15,6 +15,7 @@ const route = useRoute();
 const loading = ref(false);
 const error = ref("");
 const regionError = ref("");
+const mapNotice = ref("");
 const districtsLoading = ref(false);
 const villagesLoading = ref(false);
 const provinces = ref<RegionOption[]>([]);
@@ -109,6 +110,7 @@ async function districtChanged() {
 
 async function villageChanged() {
   form.subdistrictCode = selectedVillageCode.value;
+  mapNotice.value = "";
   const village = villages.value.find(item => item.code === selectedVillageCode.value);
   if (!village) return;
   if (Number.isFinite(village.latitude) && Number.isFinite(village.longitude)) {
@@ -120,10 +122,21 @@ async function villageChanged() {
   const city = cities.value.find(item => item.code === selectedCityCode.value)?.name || "";
   const district = districts.value.find(item => item.code === selectedDistrictCode.value)?.name || "";
   try {
-    const point = await $fetch<{ latitude: number; longitude: number }>("/api/geocode", { query: { province, city, district, subdistrict: village.name, postalCode: form.postalCode } });
-    form.latitude = point.latitude;
-    form.longitude = point.longitude;
-  } catch { /* pin tetap dapat dipilih manual */ }
+    const point = await $fetch<
+      | { found?: true; latitude: number; longitude: number }
+      | { found: false; message: string }
+    >("/api/geocode", { query: { province, city, district, subdistrict: village.name, postalCode: form.postalCode } });
+    if (point.found === false) {
+      mapNotice.value = point.message;
+      return;
+    }
+    if (Number.isFinite(point.latitude) && Number.isFinite(point.longitude)) {
+      form.latitude = point.latitude;
+      form.longitude = point.longitude;
+    }
+  } catch {
+    mapNotice.value = "Pusat peta belum tersedia. Gunakan lokasi saya atau geser pin secara manual.";
+  }
 }
 
 async function save() {
@@ -206,6 +219,7 @@ useSeoMeta({ title: "Alamat Baru" });
             </div>
           </section>
 
+          <p v-if="mapNotice" class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-bold leading-5 text-amber-800">{{ mapNotice }}</p>
           <LocationPicker v-model="form" />
         </div>
 

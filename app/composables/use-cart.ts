@@ -3,10 +3,17 @@ import type { CartLine } from "~~/shared/types";
 export function useCart() {
   const lines = useState<CartLine[]>("cart-lines", () => []);
   const hydrated = useState("cart-hydrated", () => false);
-  if (import.meta.client && !hydrated.value) {
-    try { lines.value = JSON.parse(localStorage.getItem("jwlab-cart") || "[]"); } catch { lines.value = []; }
-    hydrated.value = true;
-    watch(lines, (value) => localStorage.setItem("jwlab-cart", JSON.stringify(value)), { deep: true });
+  if (import.meta.client) {
+    // Reading localStorage during setup changes the first client render before Vue
+    // hydrates the SSR HTML. Load it only after mount so both trees initially match.
+    onMounted(() => {
+      if (hydrated.value) return;
+      try { lines.value = JSON.parse(localStorage.getItem("jwlab-cart") || "[]"); } catch { lines.value = []; }
+      hydrated.value = true;
+    });
+    watch(lines, (value) => {
+      if (hydrated.value) localStorage.setItem("jwlab-cart", JSON.stringify(value));
+    }, { deep: true });
   }
   const count = computed(() => lines.value.reduce((sum, line) => sum + line.quantity, 0));
   const subtotal = computed(() => lines.value.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0));
